@@ -1,11 +1,11 @@
 {
   "schema": "qiven-workspace-lock-v1",
   "workspace_id": "qiven",
-  "generation": "sha256:cb26fc44748877d1fdd61f4575e2873ea032cc8b9baa03f8765a8bfa6a0f85ae",
+  "generation": "sha256:0a9047be9019814d8e30b172326f670b0bd52e77bc15eb79ec887964519b1211",
   "nodes": {
     "qiven-context": {
-      "commit": "7556341faceccc7ff62c14c982f990d3db1d54c1",
-      "tree": "310313c79455f4b7447d8559f74d5e0815f88a9a",
+      "commit": "8914cef9e659efddc5cf4201932db311efb3a90b",
+      "tree": "9ed98a1203afd6c1de855ddde6c8702433114e4a",
       "declaration": {
         "origin": "census-wr0",
         "path": "census/wr0-declarations.json",
