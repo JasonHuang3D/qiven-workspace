@@ -1,0 +1,170 @@
+{
+  "schema": "qiven-wr0-census-declarations-v1",
+  "sealed": "2026-09-25",
+  "authority": "WR-0 census (qiven-devkit PR #34, merge b0f0487) re-bound to the live canonical main HEADs of 2026-09-25 after owner acceptance of the WR-0 sealed outputs and WR-1 authorization; edge semantics re-verified against the live CMakeLists/shim evidence cited in the census.",
+  "binding_law": "Every record below is a WR-0 census declaration for a legacy commit lacking .qiven/dependencies.json, bound to the exact commit/tree recorded in workspace.lock.json. Census origins are shadow-only: they cannot emit an authoritative graph receipt, authorize a class cutover, or serve WR-7, and each expires when its node's repository-owned declaration lands (WR-3..WR-6).",
+  "nodes": {
+    "qiven-context": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-context",
+      "supported_platforms": ["windows"],
+      "provides": [],
+      "dependencies": [
+        {
+          "id": "qiven-devkit",
+          "kind": "tooling",
+          "contract": "qiven-devkit-operator-v2",
+          "legacy_consumer_pin": {
+            "sha": "d1d2a3a47678c4e8aa866d7e59ba1f5aa5f0a738",
+            "equals_lock_node": false,
+            "note": "shim+pin (tools/qiven.py discovery + operator.json pin); the workspace's only stale devkit pin; WR-6 reconciliation target"
+          }
+        }
+      ]
+    },
+    "qiven-devkit": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-devkit",
+      "supported_platforms": ["windows"],
+      "provides": [
+        {"contract": "qiven-devkit-operator-v2", "note": "operator runtime + gates + hook router"},
+        {"contract": "qiven-devkit-resolver-v1", "note": "workspace resolver (WR-1)"}
+      ],
+      "dependencies": []
+    },
+    "qiven-runtime": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-runtime",
+      "supported_platforms": ["windows"],
+      "provides": [
+        {"contract": "qiven-runtime-api-v1", "targets": ["qiven::runtime"]}
+      ],
+      "dependencies": [
+        {
+          "id": "qiven-foundation",
+          "kind": "first-party-source",
+          "contract": "qiven-foundation-api-v1",
+          "legacy_consumer_pin": {"sha": "f28b86b0448c7b08c64f6c4bc11e0c327d240212", "equals_lock_node": true}
+        },
+        {
+          "id": "qiven-context-draft",
+          "kind": "first-party-source",
+          "contract": "qiven-context-draft-v4",
+          "legacy_consumer_pin": {"sha": "ea9af72dd53b227a4f17142b0d437dfbb6148dbe", "equals_lock_node": true}
+        },
+        {
+          "id": "qiven-third-party-win",
+          "kind": "third-party-singleton",
+          "platform": "windows",
+          "packages": ["sqlite3"],
+          "contract": "qiven-third-party-win-sqlite3-v1",
+          "legacy_consumer_pin": {"sha": "318453834315a68fa85374dffa9a77ff73d6e71c", "equals_lock_node": true}
+        },
+        {
+          "id": "qiven-devkit",
+          "kind": "tooling",
+          "contract": "qiven-devkit-operator-v2",
+          "note": "managed operator snapshot (template 0.1.9 custody rollout); no consumer-local devkit_pin field"
+        },
+        {
+          "id": "qiven-toolchain-win",
+          "kind": "toolchain",
+          "platform": "windows",
+          "contract": "qiven-toolchain-win-v1"
+        }
+      ]
+    },
+    "qiven-foundation": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-foundation",
+      "supported_platforms": ["windows"],
+      "provides": [
+        {"contract": "qiven-foundation-api-v1", "targets": ["qiven::foundation"]}
+      ],
+      "dependencies": [
+        {
+          "id": "qiven-devkit",
+          "kind": "tooling",
+          "contract": "qiven-devkit-operator-v2",
+          "note": "managed operator snapshot (template 0.1.9 custody rollout)"
+        },
+        {
+          "id": "qiven-toolchain-win",
+          "kind": "toolchain",
+          "platform": "windows",
+          "contract": "qiven-toolchain-win-v1"
+        }
+      ]
+    },
+    "qiven-math": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-math",
+      "supported_platforms": ["windows"],
+      "provides": [
+        {"contract": "qiven-math-core-v1", "targets": ["qiven::math"]}
+      ],
+      "dependencies": [
+        {
+          "id": "qiven-foundation",
+          "kind": "first-party-source",
+          "contract": "qiven-foundation-api-v1",
+          "legacy_consumer_pin": {"sha": "f28b86b0448c7b08c64f6c4bc11e0c327d240212", "equals_lock_node": true, "note": "validation gated behind if(NOT TARGET qiven::foundation) - the Profile B defect class"}
+        },
+        {
+          "id": "qiven-devkit",
+          "kind": "tooling",
+          "contract": "qiven-devkit-operator-v2",
+          "note": "managed operator snapshot (template 0.1.9 custody rollout)"
+        }
+      ]
+    },
+    "qiven-context-draft": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-context-draft",
+      "supported_platforms": ["windows"],
+      "provides": [
+        {"contract": "qiven-context-draft-v4", "targets": ["qiven::context_draft"]}
+      ],
+      "dependencies": [
+        {
+          "id": "qiven-foundation",
+          "kind": "first-party-source",
+          "contract": "qiven-foundation-api-v1",
+          "legacy_consumer_pin": {"sha": "f28b86b0448c7b08c64f6c4bc11e0c327d240212", "equals_lock_node": true, "note": "validation gated behind if(NOT TARGET qiven::foundation) - the Profile B defect class"}
+        },
+        {
+          "id": "qiven-devkit",
+          "kind": "tooling",
+          "contract": "qiven-devkit-operator-v2",
+          "note": "managed operator snapshot (template 0.1.9 custody rollout)"
+        }
+      ]
+    },
+    "qiven-toolchain-win": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-toolchain-win",
+      "supported_platforms": ["windows"],
+      "provides": [
+        {"contract": "qiven-toolchain-win-v1", "note": "pinned executables (CMake, clang-format) per toolchain.json inside the selected revision"}
+      ],
+      "dependencies": []
+    },
+    "qiven-third-party-win": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-third-party-win",
+      "supported_platforms": ["windows"],
+      "provides": [
+        {"contract": "qiven-third-party-win-sqlite3-v1", "packages": ["sqlite3"], "note": "package provenance and targets remain owned by this repository"}
+      ],
+      "dependencies": []
+    },
+    "qiven-docs": {
+      "schema": "qiven-dependencies-v1",
+      "repository": "qiven-docs",
+      "supported_platforms": ["windows"],
+      "provides": [],
+      "dependencies": [],
+      "note": "cross-LLM deliberation repository; enters a source closure only when policy explicitly references it (census selection: only-when-referenced)"
+    }
+  }
+}

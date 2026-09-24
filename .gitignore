@@ -1,0 +1,4 @@
+.generated-temp/
+__pycache__/
+*.pyc
+.qiven-workspace.local.json

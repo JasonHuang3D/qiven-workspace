@@ -1,0 +1,108 @@
+{
+  "schema": "qiven-workspace-lock-v1",
+  "workspace_id": "qiven",
+  "generation": "sha256:687673bc02a3a6778b73063f7e6fcd7c1439280170ceebd1570cd0584d17238d",
+  "nodes": {
+    "qiven-context": {
+      "commit": "7556341faceccc7ff62c14c982f990d3db1d54c1",
+      "tree": "310313c79455f4b7447d8559f74d5e0815f88a9a",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:4a033cbf857820310e443c528558b770d93c83a447b2cfee53ac9a8e95afad6e",
+        "shadow_only": true
+      }
+    },
+    "qiven-devkit": {
+      "commit": "e4000ff3c43c6744628759e64ef6022f7b371466",
+      "tree": "339f391d89cfcdb98eeb9fc41fd81c85357b6326",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:9370c384bec7cad47f109214e0e0ea8526ed63b47e289156c8c647b4558ecadd",
+        "shadow_only": true
+      }
+    },
+    "qiven-runtime": {
+      "commit": "fc2d8a90f5adeada14d5fa38746bfba0f03d121c",
+      "tree": "c517fb31008805ad356c10d80d5c6fc77ace6d7a",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:4f6b4b31f39f53a134a4132ed4fd7d9642516359cf65e9e5479411000f2dcda7",
+        "shadow_only": true
+      }
+    },
+    "qiven-foundation": {
+      "commit": "f28b86b0448c7b08c64f6c4bc11e0c327d240212",
+      "tree": "43916375053914e590918d2563d597681cbc0005",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:f941a536817acc1aead7dafd5e438ccc6e66da296d2ad971eb287b0868b24f7a",
+        "shadow_only": true
+      }
+    },
+    "qiven-math": {
+      "commit": "518e5111515a3ad8158d7f96628f00e825d2cf17",
+      "tree": "5944f3566ce1f5ec5b06d581df4f6d119e8b76c5",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:58bbd96010c5a24c20a1da3c7177a203da3d534d1edd22b1b0576e12a2b2ade2",
+        "shadow_only": true
+      }
+    },
+    "qiven-context-draft": {
+      "commit": "ea9af72dd53b227a4f17142b0d437dfbb6148dbe",
+      "tree": "678cedb85affd98f73b0b78058d1acf82c18452a",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:5494ee0d1c57ac635c2388b787ecd8013721f3f673904edc6376c18cf3f656b3",
+        "shadow_only": true
+      }
+    },
+    "qiven-toolchain-win": {
+      "commit": "9c830933c53737fa78eb07f35fae98c62617af5e",
+      "tree": "f5e91bc860efbcc88ce8ecc93359a73e0404baac",
+      "platform": "windows",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:92283f692f37ebe2342d9b483144003615fca39a7c66e8819fe06af14c420206",
+        "shadow_only": true
+      }
+    },
+    "qiven-third-party-win": {
+      "commit": "318453834315a68fa85374dffa9a77ff73d6e71c",
+      "tree": "09c3fc0a24c029755877f870e824b523dd41cb04",
+      "platform": "windows",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:357417f63c4ff6aa0fb0c7179c462df16b2148f1ce90efbae21b7261f49b3d8f",
+        "shadow_only": true
+      }
+    },
+    "qiven-docs": {
+      "commit": "7fe0df7627e7bedddc226895294d732bf014b954",
+      "tree": "234c35b48939b6cb7ca52bcfbcc503823e1533a3",
+      "declaration": {
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:1f76372d0c3c77f3cd4fc3c9e7ef75f6bc2f0d782a4ca14a3f15e71b16a41faf",
+        "shadow_only": true
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "qiven-workspace-v1",
+  "workspace_id": "qiven",
+  "repositories": {
+    "qiven-context": {
+      "url": "https://github.com/JasonHuang3D/qiven-context.git"
+    },
+    "qiven-devkit": {
+      "url": "https://github.com/JasonHuang3D/qiven-devkit.git"
+    },
+    "qiven-runtime": {
+      "url": "https://github.com/JasonHuang3D/qiven-runtime.git"
+    },
+    "qiven-foundation": {
+      "url": "https://github.com/JasonHuang3D/qiven-foundation.git"
+    },
+    "qiven-math": {
+      "url": "https://github.com/JasonHuang3D/qiven-math.git"
+    },
+    "qiven-context-draft": {
+      "url": "https://github.com/JasonHuang3D/qiven-context-draft.git"
+    },
+    "qiven-toolchain-win": {
+      "url": "https://github.com/JasonHuang3D/qiven-toolchain-win.git",
+      "platform": "windows"
+    },
+    "qiven-third-party-win": {
+      "url": "https://github.com/JasonHuang3D/qiven-third-party-win.git",
+      "platform": "windows"
+    },
+    "qiven-docs": {
+      "url": "https://github.com/JasonHuang3D/qiven-docs.git",
+      "selection": "only-when-referenced"
+    }
+  }
+}
