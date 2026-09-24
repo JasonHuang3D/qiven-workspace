@@ -1,0 +1,23 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-math",
+  "note": "WR-3 (ADR-0052): the Foundation semantic edge is workspace-resolved; the CMake sibling discovery and consumer-local SHA pin are retired at this cutover.",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [
+    {
+      "contract": "qiven-math-v1",
+      "targets": [
+        "qiven::math"
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "id": "qiven-foundation",
+      "kind": "first-party-source",
+      "contract": "qiven-foundation-v1"
+    }
+  ]
+}

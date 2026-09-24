@@ -1,108 +1,108 @@
 {
-  "schema": "qiven-workspace-lock-v1",
-  "workspace_id": "qiven",
-  "generation": "sha256:0a9047be9019814d8e30b172326f670b0bd52e77bc15eb79ec887964519b1211",
+  "generation": "sha256:b5b22c5c7d5844f4cb9dc84a2d616443e92e182a1b2aa35bcc839f4238519165",
   "nodes": {
     "qiven-context": {
       "commit": "8914cef9e659efddc5cf4201932db311efb3a90b",
-      "tree": "9ed98a1203afd6c1de855ddde6c8702433114e4a",
       "declaration": {
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
         "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
         "digest": "sha256:4a033cbf857820310e443c528558b770d93c83a447b2cfee53ac9a8e95afad6e",
-        "shadow_only": true
-      }
-    },
-    "qiven-devkit": {
-      "commit": "3c638b5a613f7221a6aabfbd868df6529de5d6da",
-      "tree": "5999b51e20e0b0a0ec6a34899b4de4b694531f92",
-      "declaration": {
         "origin": "census-wr0",
         "path": "census/wr0-declarations.json",
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:9370c384bec7cad47f109214e0e0ea8526ed63b47e289156c8c647b4558ecadd",
         "shadow_only": true
-      }
-    },
-    "qiven-runtime": {
-      "commit": "fc2d8a90f5adeada14d5fa38746bfba0f03d121c",
-      "tree": "c517fb31008805ad356c10d80d5c6fc77ace6d7a",
-      "declaration": {
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:4f6b4b31f39f53a134a4132ed4fd7d9642516359cf65e9e5479411000f2dcda7",
-        "shadow_only": true
-      }
-    },
-    "qiven-foundation": {
-      "commit": "f28b86b0448c7b08c64f6c4bc11e0c327d240212",
-      "tree": "43916375053914e590918d2563d597681cbc0005",
-      "declaration": {
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:f941a536817acc1aead7dafd5e438ccc6e66da296d2ad971eb287b0868b24f7a",
-        "shadow_only": true
-      }
-    },
-    "qiven-math": {
-      "commit": "518e5111515a3ad8158d7f96628f00e825d2cf17",
-      "tree": "5944f3566ce1f5ec5b06d581df4f6d119e8b76c5",
-      "declaration": {
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:58bbd96010c5a24c20a1da3c7177a203da3d534d1edd22b1b0576e12a2b2ade2",
-        "shadow_only": true
-      }
+      },
+      "tree": "9ed98a1203afd6c1de855ddde6c8702433114e4a"
     },
     "qiven-context-draft": {
-      "commit": "ea9af72dd53b227a4f17142b0d437dfbb6148dbe",
-      "tree": "678cedb85affd98f73b0b78058d1acf82c18452a",
+      "commit": "a0078372001d8ac45ac3ff8c5674167935b45f23",
       "declaration": {
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:5494ee0d1c57ac635c2388b787ecd8013721f3f673904edc6376c18cf3f656b3",
-        "shadow_only": true
-      }
+        "blob": "87500a7ad3ab83b5f9c6874905c52165b557cfac",
+        "digest": "sha256:34beb216e3fc994fdfdba28caf296df8a43dbc05d9245c1d4411c9f96c834ed2",
+        "origin": "repository-manifest",
+        "path": "declarations/qiven-context-draft.json",
+        "shadow_only": false
+      },
+      "tree": "4072a496b0d94a6480f06f0cb28961dcfed4696b"
     },
-    "qiven-toolchain-win": {
-      "commit": "9c830933c53737fa78eb07f35fae98c62617af5e",
-      "tree": "f5e91bc860efbcc88ce8ecc93359a73e0404baac",
-      "platform": "windows",
+    "qiven-devkit": {
+      "commit": "d90b1655a696fa31c9811cdaf83c657d5eccb4ea",
       "declaration": {
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:9370c384bec7cad47f109214e0e0ea8526ed63b47e289156c8c647b4558ecadd",
         "origin": "census-wr0",
         "path": "census/wr0-declarations.json",
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:92283f692f37ebe2342d9b483144003615fca39a7c66e8819fe06af14c420206",
         "shadow_only": true
-      }
-    },
-    "qiven-third-party-win": {
-      "commit": "318453834315a68fa85374dffa9a77ff73d6e71c",
-      "tree": "09c3fc0a24c029755877f870e824b523dd41cb04",
-      "platform": "windows",
-      "declaration": {
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:357417f63c4ff6aa0fb0c7179c462df16b2148f1ce90efbae21b7261f49b3d8f",
-        "shadow_only": true
-      }
+      },
+      "tree": "df7963cf89b4d8ab39a07f12d6d7f8a869af7c6d"
     },
     "qiven-docs": {
       "commit": "7fe0df7627e7bedddc226895294d732bf014b954",
-      "tree": "234c35b48939b6cb7ca52bcfbcc503823e1533a3",
       "declaration": {
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
         "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
         "digest": "sha256:1f76372d0c3c77f3cd4fc3c9e7ef75f6bc2f0d782a4ca14a3f15e71b16a41faf",
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
         "shadow_only": true
-      }
+      },
+      "tree": "234c35b48939b6cb7ca52bcfbcc503823e1533a3"
+    },
+    "qiven-foundation": {
+      "commit": "4b66acc612cdd952723b7a483d232d3d4cd0ca08",
+      "declaration": {
+        "blob": "31d08eecd57ec664d9f3a137ef7442dab018d96f",
+        "digest": "sha256:0a429e9e259706b823ad811b172a448f13ab8b15e502add8e2359811c1597deb",
+        "origin": "repository-manifest",
+        "path": "declarations/qiven-foundation.json",
+        "shadow_only": false
+      },
+      "tree": "6f309b712cf3da8e9d6ef657e57d0b2cc27bc5c9"
+    },
+    "qiven-math": {
+      "commit": "b00db8ccf94d63aecb016b0a9a3fbed0cd8afdb3",
+      "declaration": {
+        "blob": "9a61da5f7538283e299ebd3122f31e991c5bcb64",
+        "digest": "sha256:2f08330a372b8b8e1e9859a5c4843af9552b5e70f486b455106332d1f2102901",
+        "origin": "repository-manifest",
+        "path": "declarations/qiven-math.json",
+        "shadow_only": false
+      },
+      "tree": "354846729975ca394f0541746ad995b19961d944"
+    },
+    "qiven-runtime": {
+      "commit": "0b6560064d8509c42bc874869b38d722abe53ea2",
+      "declaration": {
+        "blob": "e2465285770146d4a7fa36c3ab3cdeed510e9ea3",
+        "digest": "sha256:9809ae8c2c194c5c822393fe7af5dd9a2986dba0d1728f04d0c6f21bf4f828e4",
+        "origin": "repository-manifest",
+        "path": "declarations/qiven-runtime.json",
+        "shadow_only": false
+      },
+      "tree": "0e1935eb6628e06645a0532f6fe01a6e6056dca4"
+    },
+    "qiven-third-party-win": {
+      "commit": "318453834315a68fa85374dffa9a77ff73d6e71c",
+      "declaration": {
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:357417f63c4ff6aa0fb0c7179c462df16b2148f1ce90efbae21b7261f49b3d8f",
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "shadow_only": true
+      },
+      "platform": "windows",
+      "tree": "09c3fc0a24c029755877f870e824b523dd41cb04"
+    },
+    "qiven-toolchain-win": {
+      "commit": "9c830933c53737fa78eb07f35fae98c62617af5e",
+      "declaration": {
+        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
+        "digest": "sha256:92283f692f37ebe2342d9b483144003615fca39a7c66e8819fe06af14c420206",
+        "origin": "census-wr0",
+        "path": "census/wr0-declarations.json",
+        "shadow_only": true
+      },
+      "platform": "windows",
+      "tree": "f5e91bc860efbcc88ce8ecc93359a73e0404baac"
     }
-  }
+  },
+  "schema": "qiven-workspace-lock-v1",
+  "workspace_id": "qiven"
 }

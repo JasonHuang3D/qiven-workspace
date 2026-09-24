@@ -1,0 +1,18 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-foundation",
+  "note": "WR-3 provision (ADR-0052): the Foundation core contract. The exact revision is selected once by the workspace lock; consumers declare this contract and receive the resolved root through the workspace adapter (no consumer-local pin, no sibling discovery).",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [
+    {
+      "contract": "qiven-foundation-v1",
+      "targets": [
+        "qiven::foundation"
+      ],
+      "note": "The foundation static library; materialized once per build graph by the workspace adapter guard."
+    }
+  ],
+  "dependencies": []
+}

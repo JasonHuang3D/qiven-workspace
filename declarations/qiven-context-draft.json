@@ -1,0 +1,23 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-context-draft",
+  "note": "WR-3 (ADR-0052): the Foundation semantic edge is workspace-resolved; the CMake sibling discovery and consumer-local SHA pin are retired at this cutover. The draft remains independently versioned.",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [
+    {
+      "contract": "qiven-context-draft-v1",
+      "targets": [
+        "qiven::context_draft"
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "id": "qiven-foundation",
+      "kind": "first-party-source",
+      "contract": "qiven-foundation-v1"
+    }
+  ]
+}
