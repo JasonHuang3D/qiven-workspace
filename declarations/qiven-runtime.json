@@ -1,7 +1,7 @@
 {
   "schema": "qiven-dependencies-v1",
   "repository": "qiven-runtime",
-  "note": "WR-3 (ADR-0052): the Foundation semantic edge is workspace-resolved. The context-draft and third-party edges remain legacy root+pin until WR-4 / WR-5 and are not declared here yet.",
+  "note": "WR-4 (ADR-0052): the Foundation and context-draft semantic edges are workspace-resolved. The third-party edge remains legacy root+pin until WR-5 and is not declared here yet.",
   "supported_platforms": [
     "windows"
   ],
@@ -11,6 +11,11 @@
       "id": "qiven-foundation",
       "kind": "first-party-source",
       "contract": "qiven-foundation-v1"
+    },
+    {
+      "id": "qiven-context-draft",
+      "kind": "first-party-source",
+      "contract": "qiven-context-draft-v1"
     }
   ]
 }
