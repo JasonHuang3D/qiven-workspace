@@ -6,13 +6,14 @@ Resolution program (ADR-0052; accepted architecture in qiven-docs
 It carries dependency-control data and bootstrap only — no product
 semantics, no canonical cognition, no execution authority.
 
-**Status: WR-1 shadow proposal.** WR-0 sealed outputs were accepted by
-the owner on 2026-09-25 and WR-1 (this repository) was authorized. The
-repository becomes an authority only after the independently held
-control-repository trust policy is owner-accepted and admits an exact
-revision (qiven-context `governance/workspace-control-trust-policy.json`);
-until then every receipt from this tree is labeled shadow-only and can
-neither authorize a class cutover nor serve WR-7.
+**Status: the WR program is DELIVERED (WR-0..WR-8, 2026-09-28).** The
+trust policy (qiven-context `governance/workspace-control-trust-policy.json`)
+is owner-accepted and admits this chain; every lock node carries a
+repository-owned manifest declaration (`declarations/*.json`, mirrored
+from each repository's `.qiven/dependencies.json`); the graph resolves
+AUTHORITATIVE with zero shadow-only declarations (first full-graph
+authoritative resolution 2026-09-28). TCA's repository selector is cut
+over to the WorkspaceGeneration under ADR-0058.
 
 ## Layout
 
@@ -20,17 +21,30 @@ neither authorize a class cutover nor serve WR-7.
 | --- | --- |
 | `workspace.json` | node universe (schema `qiven-workspace-v1`, qiven-devkit `docs/schemas/`) |
 | `workspace.lock.json` | immutable revision snapshot (`qiven-workspace-lock-v1`); generation digest is path-independent |
-| `census/wr0-declarations.json` | sealed WR-0 census declarations for legacy commits without `.qiven/dependencies.json`, bound to exact commit/tree, shadow-only until repository-owned manifests land (WR-3..WR-6) |
+| `declarations/*.json` | per-node repository-manifest declaration cache (written by lock-update transactions) |
 | `bootstrap/qiven-bootstrap.py` | stdlib-only bootstrap: validates the lock subset, identity-checks the locked Devkit BEFORE any import, runs only the locked resolver in preflight mode |
 | `qiven.cmd` | thin UX launcher (WG-5): no discovery, no pins, no fallbacks |
 
-## Use (shadow mode)
+The sealed WR-0 census (`census/wr0-declarations.json`) served legacy
+commits without repository manifests through the WR-3..WR-8 migrations
+and was REMOVED at owner direction on 2026-09-28 once the last census
+binding (qiven-docs) retired — git history retains it.
 
-    qiven.cmd --devkit <path-to-locked-devkit-checkout>
+## Use
 
-or explicitly:
+Preflight / shadow:
 
-    python bootstrap\qiven-bootstrap.py --control <this-repo> --devkit <devkit-checkout>
+    python bootstrap\qiven-bootstrap.py preflight --control <this-repo> --devkit <devkit-checkout>
+
+Authoritative (requires the trust policy):
+
+    python bootstrap\qiven-bootstrap.py gate-configure --repo <repo> --repo-root <path> \
+        --preset <preset> --devkit <devkit-checkout> \
+        --mode authoritative --trust-policy <qiven-context>/governance/workspace-control-trust-policy.json
+
+Lock movement (the resolver's `lock-update` is the lock's only writer;
+the session commits the emitted lock + declaration cache as one
+auditable transaction).
 
 Optional per-machine checkout mapping lives in an untracked
 `.qiven-workspace.local.json` (`{"checkouts": {"qiven-devkit": "<path>"}}`);
@@ -40,8 +54,17 @@ a path is a locator, never a selector.
 
 - Bootstrap and the resolver never mutate this lock; lock movement is an
   explicit governed transaction (architecture doc 01 section 3).
-- The legacy devkit pin split (qiven-context executes `d1d2a3a4` via
-  shim+pin; C++ repositories execute managed template snapshots; devkit
-  main has moved on) is recorded by the census and reported by the
-  resolver as a typed baseline conflict — a WR-6 reconciliation target,
-  never silently resolved.
+- The ratified routine-advance rule is MECHANIZED in the resolver
+  (WR-8): a control commit whose diff from the closest admitted ancestor
+  is limited to node advancement auto-admits; manifest/census/schema/
+  bootstrap changes require explicit owner admission recorded in the
+  trust policy.
+- Lock-entry cadence (ADR-0058 E7.1): a publishing session advances the
+  affected nodes in the same window; the TCA index build fails closed
+  on divergence (the selector gate).
+- The forbidden resolver-pattern gate (qiven-devkit
+  `tools/check_resolver_patterns.py`, wired into the devkit publication
+  gate) scans all eight workspace repositories for the retired
+  architecture's reintroduction.
+- Stage-by-stage evidence: qiven-devkit
+  `docs/design/workspace-resolution/wr{0,2,3,5,6,7,8}-report.md`.
