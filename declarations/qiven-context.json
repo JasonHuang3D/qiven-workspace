@@ -1,0 +1,16 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-context",
+  "note": "WR-7/WR-8 (ADR-0052): the repository-owned declaration ends the census-wr0 shadow binding on this node. The operator tooling edge is workspace-resolved through the bootstrap launcher (WR-6); the WR-0 census legacy_consumer_pin record retires with the census declaration - the live pin was deleted at context 64fd982.",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [],
+  "dependencies": [
+    {
+      "id": "qiven-devkit",
+      "kind": "tooling",
+      "contract": "qiven-devkit-operator-v2"
+    }
+  ]
+}
