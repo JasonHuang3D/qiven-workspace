@@ -64,7 +64,9 @@ a path is a locator, never a selector.
   on divergence (the selector gate).
 - The forbidden resolver-pattern gate (qiven-devkit
   `tools/check_resolver_patterns.py`, wired into the devkit publication
-  gate) scans all eight workspace repositories for the retired
-  architecture's reintroduction.
+  gate) scans all NINE workspace repositories — the eight product
+  repositories plus the control repository itself, including the
+  third-party singleton (extended 2026-09-28 to cover .cmd/.bat
+  launchers as well) — for the retired architecture's reintroduction.
 - Stage-by-stage evidence: qiven-devkit
   `docs/design/workspace-resolution/wr{0,2,3,5,6,7,8}-report.md`.

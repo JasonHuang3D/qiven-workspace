@@ -5,8 +5,11 @@ validate the lock's bootstrap subset, identity-check the locked Devkit
 checkout BEFORE any Devkit import, then execute only the locked Devkit
 resolver in preflight mode and emit its release receipt. It never resolves
 graphs, never selects a newer Devkit, never falls back to a sibling Devkit,
-and never mutates the lock. Until the owner-accepted control trust policy
-admits this control revision, only shadow mode is available.
+and never mutates the lock. Authoritative mode requires the owner-accepted
+control trust policy (ACCEPTED 2026-09-25, admitted revisions recorded in
+qiven-context governance; routine advances are mechanized per WR-8) — an
+unadmitted control revision fails typed and leaves shadow as an untrusted
+diagnostic only.
 
 WR-3 extension (doc 02 stage WR-3): `gate-configure` runs the locked
 resolver's adapter operation for one target repository and then executes
