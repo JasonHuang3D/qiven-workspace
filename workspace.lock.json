@@ -1,5 +1,5 @@
 {
-  "generation": "sha256:9751386d8e4cc6140ef158f7c18dfd6b0049f752427c68f94a67d49d12435d62",
+  "generation": "sha256:bbba320d372fcd5ca21536e44afe760c76034400e55906dc53e727e9b03f57cc",
   "nodes": {
     "qiven-context": {
       "commit": "465402cd71bf867914c4eb386b41b1a907af647a",
@@ -35,15 +35,15 @@
       "tree": "960df23afd6d250990855b7c3d7e0e83d5e39e6d"
     },
     "qiven-docs": {
-      "commit": "52a8a32fdad07667900436b24133b685a8503cc0",
+      "commit": "4b6f22f59a3cf9881ce3fdeb1cb16f4cedd5b808",
       "declaration": {
-        "blob": "07a1f72e6b59deda90aa5a6160360935bd9d78dc",
-        "digest": "sha256:1f76372d0c3c77f3cd4fc3c9e7ef75f6bc2f0d782a4ca14a3f15e71b16a41faf",
-        "origin": "census-wr0",
-        "path": "census/wr0-declarations.json",
-        "shadow_only": true
+        "blob": "722c85d6b7b6f83bef8e911931b48ab15d2ddb94",
+        "digest": "sha256:d75980955cbfe7d643f736554a32bb2bb04219bdcc1f001ba3deaeff20334411",
+        "origin": "repository-manifest",
+        "path": "declarations/qiven-docs.json",
+        "shadow_only": false
       },
-      "tree": "cce68fff46649802ef42ad29bb7f26afdf4c32bd"
+      "tree": "de6d52fb86e55acb88d21f4f5d576ef4de003dc7"
     },
     "qiven-foundation": {
       "commit": "6906ea106cd95ddf94a8dea674e497dcf125b3b4",

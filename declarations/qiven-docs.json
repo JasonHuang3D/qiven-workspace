@@ -1,0 +1,10 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-docs",
+  "note": "WR-8 census retirement (ADR-0052): the repository-owned declaration ends the census-wr0 shadow binding - the LAST shadow-only node. A cross-LLM deliberation repository: no build edges; enters a cognition source closure only when a policy rule explicitly references it (the P4 on-demand law).",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [],
+  "dependencies": []
+}
