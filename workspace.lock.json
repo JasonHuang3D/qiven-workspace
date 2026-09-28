@@ -1,8 +1,8 @@
 {
-  "generation": "sha256:98d555d4686b710ad20158375779bd4f8b7f2903a5e518e58daf4fcc50f94ed1",
+  "generation": "sha256:5995a5fe4c3451c4bd2a2d60e5260ecb32f992dd235aecf3d8e247c225605042",
   "nodes": {
     "qiven-context": {
-      "commit": "42a98bcc99a2f7e9dc358276d4ebd65f6e70a2f4",
+      "commit": "90a84677f721703c4c890c8d4d8e50135f1cd7cb",
       "declaration": {
         "blob": "5d0da1eb910ed725b81a3fbd20c1d40391dcc5c7",
         "digest": "sha256:bc2a3e4e51f2eaead6a93d6a75abd961b6824f2bd246629bdce0d5bbd3568a8a",
@@ -10,7 +10,7 @@
         "path": "declarations/qiven-context.json",
         "shadow_only": false
       },
-      "tree": "c97cc1eae89d4d44a599b03f25355f7678fe2bfe"
+      "tree": "f6b28f5bb32dc5b40957d10c0dac0ab43f4e52d1"
     },
     "qiven-context-draft": {
       "commit": "faf36883c0a34ed701b0a0811d58e8a28c7d9076",
@@ -24,7 +24,7 @@
       "tree": "c584d44793efef56d50a07b71d2431322749310a"
     },
     "qiven-devkit": {
-      "commit": "36826bf4c442bb2ae2af67377517cddcef8f0ea9",
+      "commit": "45ddfc47364ef10e34321387a54b5e78754de6de",
       "declaration": {
         "blob": "e0fd43a411ce73722fe07620bd0d86daef7a6037",
         "digest": "sha256:9370c384bec7cad47f109214e0e0ea8526ed63b47e289156c8c647b4558ecadd",
@@ -32,7 +32,7 @@
         "path": "declarations/qiven-devkit.json",
         "shadow_only": false
       },
-      "tree": "90d1ece44a740c5197dd1852edd881a90253529d"
+      "tree": "bd1af9cdc3f9faf6693ff41608aa9a3c9415f38b"
     },
     "qiven-docs": {
       "commit": "4b6f22f59a3cf9881ce3fdeb1cb16f4cedd5b808",
@@ -79,7 +79,7 @@
       "tree": "68516518cd46238a6b36af41cb0c688b17056261"
     },
     "qiven-third-party-win": {
-      "commit": "c203babb61e277dd7a7a78579804c6086933425e",
+      "commit": "7ca8660978f1d66c627b68173c01531db0385812",
       "declaration": {
         "blob": "be6a408adf26ef9fb3d512456ae94d9f803f20ad",
         "digest": "sha256:357417f63c4ff6aa0fb0c7179c462df16b2148f1ce90efbae21b7261f49b3d8f",
@@ -88,7 +88,7 @@
         "shadow_only": false
       },
       "platform": "windows",
-      "tree": "8af6fb1bb0ae7b264d3d0acf4ec186adf30e45f7"
+      "tree": "16ebd0eea516179a78db2c84a80c29ea5cad4211"
     },
     "qiven-toolchain-win": {
       "commit": "9f6ce2a9b12d148c98d389d7ee54b06ef91946a1",
