@@ -1,0 +1,17 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-third-party-win",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [
+    {
+      "contract": "qiven-third-party-win-sqlite3-v1",
+      "packages": [
+        "sqlite3"
+      ],
+      "note": "package provenance and targets remain owned by this repository"
+    }
+  ],
+  "dependencies": []
+}

@@ -1,0 +1,14 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-toolchain-win",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [
+    {
+      "contract": "qiven-toolchain-win-v1",
+      "note": "pinned executables (CMake, clang-format) per toolchain.json inside the selected revision"
+    }
+  ],
+  "dependencies": []
+}
