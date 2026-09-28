@@ -1,0 +1,18 @@
+{
+  "schema": "qiven-dependencies-v1",
+  "repository": "qiven-devkit",
+  "supported_platforms": [
+    "windows"
+  ],
+  "provides": [
+    {
+      "contract": "qiven-devkit-operator-v2",
+      "note": "operator runtime + gates + hook router"
+    },
+    {
+      "contract": "qiven-devkit-resolver-v1",
+      "note": "workspace resolver (WR-1)"
+    }
+  ],
+  "dependencies": []
+}
