@@ -4,12 +4,13 @@ Standard-library only. One narrow job: locate the workspace control root,
 validate the lock's bootstrap subset, identity-check the locked Devkit
 checkout BEFORE any Devkit import, then execute only the locked Devkit
 resolver in preflight mode and emit its release receipt. It never resolves
-graphs, never selects a newer Devkit, never falls back to a sibling Devkit,
-and never mutates the lock. Authoritative mode requires the owner-accepted
-control trust policy (ACCEPTED 2026-09-25, admitted revisions recorded in
-qiven-context governance; routine advances are mechanized per WR-8) — an
-unadmitted control revision fails typed and leaves shadow as an untrusted
-diagnostic only.
+graphs, never selects a newer Devkit — every resolution path is a LOCATOR
+identity-checked against the lock's qiven-devkit node before any import
+(no consumer-local pin; WR-6) — and never mutates the lock. Authoritative
+mode requires the owner-accepted control trust policy (ACCEPTED 2026-09-25,
+admitted revisions recorded in qiven-context governance; routine advances
+are mechanized per WR-8) — an unadmitted control revision fails typed and
+leaves shadow as an untrusted diagnostic only.
 
 WR-3 extension (doc 02 stage WR-3): `gate-configure` runs the locked
 resolver's adapter operation for one target repository and then executes
@@ -17,9 +18,13 @@ the approved CMake configure preset with QIVEN_RESOLUTION_FILE pointing at
 the emitted adapter (architecture doc 01 section 4: CMake receives the
 resolved roots; the governed entry stays cmake --preset).
 
-Exit codes: 0 released / 1 typed failure / 2 usage or environment error /
-3 configure timeout (ConfigureTimeout — the hung-cmake inner bound,
-OBL-20260925T051500Z-A9B0C1 item 1).
+Devkit locator precedence (symmetric with the control locator): explicit
+`--devkit` > env `QIVEN_DEVKIT_CHECKOUT` > `.qiven-workspace.local.json`
+checkouts > the control checkout's sibling `qiven-devkit`.
+
+Exit codes: 0 released / 1 typed failure (including environment) /
+2 argparse usage / 3 configure timeout (ConfigureTimeout; see the
+inline OBL note at the timeout site).
 """
 
 from __future__ import annotations
@@ -98,6 +103,9 @@ def _lock_bootstrap_subset(control: Path) -> dict:
 def _devkit_checkout(control: Path, explicit: str | None) -> Path:
     if explicit:
         return Path(explicit).resolve()
+    env = os.environ.get("QIVEN_DEVKIT_CHECKOUT")
+    if env:
+        return Path(env).resolve()
     local = control / ".qiven-workspace.local.json"
     if local.is_file():
         try:
@@ -107,9 +115,13 @@ def _devkit_checkout(control: Path, explicit: str | None) -> Path:
             raise Typed("RevisionUnavailable", f"bad checkout mapping: {error}") from error
         if path:
             return Path(path).resolve()
-    raise Typed("RevisionUnavailable", "no Devkit checkout: pass --devkit (an explicit locator, "
-                                      "never a selector) or register .qiven-workspace.local.json "
-                                      "checkouts")
+    sibling = control.parent / "qiven-devkit"
+    if (sibling / "tools" / "workspace_resolver.py").is_file():
+        return sibling.resolve()
+    raise Typed("RevisionUnavailable", "no Devkit checkout: pass --devkit or set "
+                                      "QIVEN_DEVKIT_CHECKOUT (explicit locators, "
+                                      "never selectors) or register "
+                                      ".qiven-workspace.local.json checkouts")
 
 
 def _identity_check(checkout: Path, node: dict, strict_clean: bool) -> list[str]:
@@ -169,7 +181,13 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     configure_cmd = [args.cmake, "--preset", args.preset]
     env = dict(os.environ)
     env["QIVEN_RESOLUTION_FILE"] = adapter_path
-    print(f"[qiven-workspace] adapter {receipt['adapter_sha256'][:19]} "
+    adapter_sha = receipt.get("adapter_sha256", "")
+    target_rev = receipt.get("target_revision", "")
+    if not adapter_sha or not target_rev:
+        missing = "adapter_sha256" if not adapter_sha else "target_revision"
+        print(f"[FAIL] adapter receipt carries no {missing}", file=sys.stderr)
+        return 1
+    print(f"[qiven-workspace] adapter {adapter_sha[:19]} "
           f"generation {receipt['workspace_generation'][:19]} mode {args.mode}")
     try:
         configure = subprocess.run(configure_cmd, cwd=str(repo_root), env=env,
@@ -185,11 +203,11 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
         return 3
     if configure.returncode != 0:
         print(f"[FAIL] cmake --preset {args.preset} rc={configure.returncode}", file=sys.stderr)
-        return configure.returncode if configure.returncode > 0 else 1
+        return 1
     receipt_path = Path(adapter_path).parent / "gate-receipt.json"
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n",
                             encoding="utf-8", newline="\n")
-    print(f"[ OK ] gate-configure {args.repo} @ {receipt['target_revision'][:9]} "
+    print(f"[ OK ] gate-configure {args.repo} @ {target_rev[:9]} "
           f"(receipt: {receipt_path})")
     return 0
 
