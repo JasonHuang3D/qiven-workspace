@@ -17,7 +17,9 @@ the approved CMake configure preset with QIVEN_RESOLUTION_FILE pointing at
 the emitted adapter (architecture doc 01 section 4: CMake receives the
 resolved roots; the governed entry stays cmake --preset).
 
-Exit codes: 0 released / 1 typed failure / 2 usage or environment error.
+Exit codes: 0 released / 1 typed failure / 2 usage or environment error /
+3 configure timeout (ConfigureTimeout — the hung-cmake inner bound,
+OBL-20260925T051500Z-A9B0C1 item 1).
 """
 
 from __future__ import annotations
@@ -169,7 +171,18 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     env["QIVEN_RESOLUTION_FILE"] = adapter_path
     print(f"[qiven-workspace] adapter {receipt['adapter_sha256'][:19]} "
           f"generation {receipt['workspace_generation'][:19]} mode {args.mode}")
-    configure = subprocess.run(configure_cmd, cwd=str(repo_root), env=env)
+    try:
+        configure = subprocess.run(configure_cmd, cwd=str(repo_root), env=env,
+                                   timeout=CONFIGURE_TIMEOUT)
+    except subprocess.TimeoutExpired as error:
+        # OBL-20260925T051500Z-A9B0C1 item (1): a hung cmake --preset must
+        # terminate the gate with a typed failure, never hang it (availability
+        # class; outer supervision still bounds it, this is the inner bound).
+        print(f"[FAIL] cmake --preset {args.preset} timed out after "
+              f"{CONFIGURE_TIMEOUT}s (ConfigureTimeout; hung configure "
+              f"class - classify before retrying, do not re-run blind)",
+              file=sys.stderr)
+        return 3
     if configure.returncode != 0:
         print(f"[FAIL] cmake --preset {args.preset} rc={configure.returncode}", file=sys.stderr)
         return configure.returncode if configure.returncode > 0 else 1
