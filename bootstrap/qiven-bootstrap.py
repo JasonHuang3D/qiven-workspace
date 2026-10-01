@@ -226,7 +226,12 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
         return 1
     adapter_path = receipt.get("adapter_path", "")
     if not adapter_path or not Path(adapter_path).is_file():
-        print("[FAIL] adapter receipt names no adapter file", file=sys.stderr)
+        # R6a completeness: receipt-content failure sites name the actual
+        # received value alongside the expectation (same law as the
+        # generation-mismatch sites above)
+        print("[FAIL] adapter receipt names no adapter file "
+              f"(received adapter_path={adapter_path!r}; expected a path "
+              "naming an existing file)", file=sys.stderr)
         _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
         return 1
     receipt["bootstrap_notes"] = notes
@@ -238,7 +243,12 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     target_rev = receipt.get("target_revision", "")
     if not adapter_sha or not target_rev:
         missing = "adapter_sha256" if not adapter_sha else "target_revision"
-        print(f"[FAIL] adapter receipt carries no {missing}", file=sys.stderr)
+        received = adapter_sha if not adapter_sha else target_rev
+        # R6a completeness: name the actual received value (same law as
+        # the other receipt-content failure sites)
+        print(f"[FAIL] adapter receipt carries no {missing} "
+              f"(received {missing}={received!r}; expected a non-empty value)",
+              file=sys.stderr)
         _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
         return 1
     print(f"[qiven-workspace] adapter {adapter_sha[:19]} "
