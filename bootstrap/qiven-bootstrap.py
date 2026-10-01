@@ -71,7 +71,17 @@ def _git(args: list[str], cwd: Path) -> str:
     except (OSError, subprocess.TimeoutExpired) as error:
         raise Typed("RevisionUnavailable", f"git {args[0]} failed: {error}") from error
     if result.returncode != 0:
-        raise Typed("RevisionUnavailable", f"git {args[0]}: {result.stderr.strip()}")
+        # BOTH captured streams ride the typed message (P0 A2 defect c,
+        # same law as R6a): stderr-only rendering dropped stdout - the
+        # classic unborn-HEAD `git rev-parse HEAD` failure prints "HEAD"
+        # to stdout AND the fatal to stderr, and half of that evidence
+        # used to vanish. Each stream is bounded (head/tail excerpt).
+        raise Typed(
+            "RevisionUnavailable",
+            f"git {args[0]}: rc={result.returncode} "
+            f"[stdout] {_bounded_stream(result.stdout)} "
+            f"[stderr] {_bounded_stream(result.stderr)}",
+        )
     return result.stdout.strip()
 
 
@@ -277,11 +287,22 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # SUPPRESS defaults are the load-bearing part (P0 A2 defect a, the
+    # same pattern as qiven_operator._common_flags): every subparser
+    # re-parses these flags via parents=[common], and a subparser
+    # default of None/"shadow" OVERWRITES a value the top-level parser
+    # already set (`--control X preflight` silently lost the control
+    # root). With SUPPRESS an absent flag sets nothing and the earlier
+    # value survives; main() re-applies the semantic defaults below.
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--control", help="explicit workspace control checkout")
-    common.add_argument("--devkit", help="explicit locked-Devkit checkout (a locator, not a selector)")
-    common.add_argument("--mode", choices=["shadow", "authoritative"], default="shadow")
-    common.add_argument("--trust-policy", help="admitted control revisions (authoritative mode)")
+    common.add_argument("--control", default=argparse.SUPPRESS,
+                        help="explicit workspace control checkout")
+    common.add_argument("--devkit", default=argparse.SUPPRESS,
+                        help="explicit locked-Devkit checkout (a locator, not a selector)")
+    common.add_argument("--mode", choices=["shadow", "authoritative"],
+                        default=argparse.SUPPRESS)
+    common.add_argument("--trust-policy", default=argparse.SUPPRESS,
+                        help="admitted control revisions (authoritative mode)")
 
     parser = argparse.ArgumentParser(
         description="qiven workspace bootstrap",
@@ -299,6 +320,12 @@ def main(argv: list[str] | None = None) -> int:
     gate_cmd.add_argument("--cmake", default="cmake", help="cmake executable (a locator)")
 
     args = parser.parse_args(argv)
+    # re-apply the semantic defaults for the SUPPRESS-absent case (flags
+    # given only BEFORE the subcommand leave these attributes absent)
+    args.control = getattr(args, "control", None)
+    args.devkit = getattr(args, "devkit", None)
+    args.mode = getattr(args, "mode", "shadow")
+    args.trust_policy = getattr(args, "trust_policy", None)
 
     try:
         control = _control_root(args.control)
@@ -313,8 +340,26 @@ def main(argv: list[str] | None = None) -> int:
                      "--mode", args.mode, "--json"]
         if args.trust_policy:
             preflight += ["--trust-policy", args.trust_policy]
-        result = subprocess.run(preflight, capture_output=True, text=True,
-                                timeout=PREFLIGHT_TIMEOUT, encoding="utf-8", errors="replace")
+        try:
+            result = subprocess.run(preflight, capture_output=True, text=True,
+                                    timeout=PREFLIGHT_TIMEOUT, encoding="utf-8", errors="replace")
+        except subprocess.TimeoutExpired as error:
+            # typed failure (P0 A2 defect b, same law as the adapter and
+            # configure sites): a hung resolver preflight must terminate
+            # typed through the bootstrap-error envelope, never escape as
+            # a raw traceback. TimeoutExpired carries whatever the child
+            # wrote before the kill (str under text=True, possibly None);
+            # that partial capture is evidence and rides the labeled
+            # both-streams renderer before the envelope.
+            partial_out = error.stdout if isinstance(error.stdout, str) else ""
+            partial_err = error.stderr if isinstance(error.stderr, str) else ""
+            print(f"[FAIL] resolver preflight timed out after {PREFLIGHT_TIMEOUT}s "
+                  "(partial captured streams follow)", file=sys.stderr)
+            _print_labeled_streams("resolver-preflight", partial_out, partial_err)
+            raise Typed("PreflightTimeout",
+                        f"resolver preflight timed out after {PREFLIGHT_TIMEOUT}s "
+                        "(hung preflight class - classify before retrying, do "
+                        "not re-run blind)") from error
     except Typed as error:
         print(json.dumps({"schema": "qiven-workspace-bootstrap-error-v1",
                           "error": {"type": error.kind, "message": str(error)}}, indent=2))
