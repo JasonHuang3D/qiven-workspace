@@ -161,18 +161,25 @@ def _bounded_stream(text: str) -> str:
     return f"{head}\n[... {omitted} bytes omitted ...]\n{tail}"
 
 
-def _print_captured_failure(stage: str, stdout: str, stderr: str) -> None:
-    """Render BOTH captured streams of a failed child, labeled and
-    bounded (P0 repair R6a): the former `stdout or stderr` relay silently
-    discarded one stream whenever the other was non-empty, leaving the
-    consumer unable to know it existed. Both streams stay bounded here;
-    the caller's captured CompletedProcess retains the full texts for
-    this process's lifetime."""
-    print(f"[FAIL] {stage} failed; both captured streams follow")
+def _print_labeled_streams(stage: str, stdout: str, stderr: str) -> None:
+    """Render BOTH captured streams of a child under labeled headers, each
+    bounded (P0 repair R6a): a discarded stream is undiscoverable
+    evidence. Used on every failure path where captured child output
+    exists; the caller's captured CompletedProcess retains the full texts
+    for this process's lifetime."""
     print(f"[{stage} stdout]")
     print(_bounded_stream(stdout))
     print(f"[{stage} stderr]")
     print(_bounded_stream(stderr))
+
+
+def _print_captured_failure(stage: str, stdout: str, stderr: str) -> None:
+    """Relay both captured streams of a FAILED child (P0 repair R6a): the
+    former `stdout or stderr` relay silently discarded one stream
+    whenever the other was non-empty, leaving the consumer unable to know
+    it existed."""
+    print(f"[FAIL] {stage} failed; both captured streams follow")
+    _print_labeled_streams(stage, stdout, stderr)
 
 
 def _gate_configure(args, control: Path, lock: dict) -> int:
@@ -203,7 +210,13 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     try:
         receipt = json.loads(result.stdout)
     except json.JSONDecodeError:
-        print("[FAIL] resolver adapter emitted no receipt", file=sys.stderr)
+        # R6a whole-file completeness: a zero-exit child that emits no
+        # parseable receipt is still a failed child interaction; the
+        # captured payload is the ONLY evidence of what it emitted and is
+        # relayed (labeled, bounded) instead of discarded.
+        print("[FAIL] resolver adapter emitted no receipt (captured child output follows)",
+              file=sys.stderr)
+        _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
         return 1
     if receipt.get("workspace_generation") != lock.get("generation"):
         print("[FAIL] adapter generation does not match the lock", file=sys.stderr)
@@ -297,7 +310,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         receipt = json.loads(result.stdout)
     except json.JSONDecodeError:
-        print("[FAIL] resolver preflight emitted no receipt", file=sys.stderr)
+        # R6a whole-file completeness (same law as the adapter site): the
+        # unparseable payload is the evidence of what the child emitted.
+        print("[FAIL] resolver preflight emitted no receipt (captured child output follows)",
+              file=sys.stderr)
+        _print_labeled_streams("resolver-preflight", result.stdout, result.stderr)
         return 1
     if receipt.get("workspace_generation") != lock.get("generation"):
         print("[FAIL] preflight generation does not match the lock", file=sys.stderr)
