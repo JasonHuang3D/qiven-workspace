@@ -23,8 +23,24 @@ Devkit locator precedence (symmetric with the control locator): explicit
 checkouts > the control checkout's sibling `qiven-devkit`.
 
 Exit codes: 0 released / 1 typed failure (including environment) /
-2 argparse usage / 3 configure timeout (ConfigureTimeout; see the
-inline OBL note at the timeout site).
+2 argparse usage / 3 configure timeout (see the inline OBL note at the
+timeout site).
+
+Common Record v1 (ADR-0060 D3; the B+D semantics + projection batch,
+2026-10-02): every typed failure envelope gains an additive OPTIONAL
+``record`` field - a Common Record v1 object (schema
+qiven-common-record-v1; the bootstrap builds it with the STANDARD
+LIBRARY ONLY and never imports the Devkit before its identity check -
+the record is a frozen DATA contract, so the builder mirrors the
+envelope shape and the devkit-side B-suite validates the emitted
+records against the devkit's frozen validator). Admission is rejected,
+observation coherent (a typed rejection is a mechanically known
+outcome, never an uncertainty), and next_action follows the class
+rules: FIX with the exact corrected flag/command where the correction
+is mechanical (missing/duplicate lock data, wrong devkit revision, no
+devkit locator, dirty authoritative dependency), DIAGNOSE
+classify-before-retry for the timeout classes (never an invented
+retry).
 """
 
 from __future__ import annotations
@@ -34,6 +50,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 GIT_TIMEOUT = 15
@@ -190,6 +207,122 @@ def _print_captured_failure(stage: str, stdout: str, stderr: str) -> None:
     it existed."""
     print(f"[FAIL] {stage} failed; both captured streams follow")
     _print_labeled_streams(stage, stdout, stderr)
+
+
+# --- Common Record v1 (ADR-0060 D3; B+D batch) ------------------------------
+# The next-action class table mirrors the frozen mapping law in
+# qiven-devkit tools/common_record.py NEXT_ACTION_EVENTS (the bootstrap
+# cannot import the devkit before its identity check; the record is a
+# frozen data contract, and the devkit-side B-suite validates the
+# emitted records against the devkit's frozen validator).
+
+_CR_VERSION = 1
+
+#: typed kind -> (event class, mechanically-known correction). Kinds not
+#: listed map to DIAGNOSE classify-before-retry (both captured streams
+#: already ride the typed message; the correction is NOT mechanical).
+_CR_FIX_TABLE: dict[str, tuple[str, str]] = {
+    "WorkspaceNotFound": (
+        "invocation-rejected",
+        "pass --control (or set QIVEN_WORKSPACE_CONTROL) pointing at the workspace "
+        "control checkout that carries workspace.json + workspace.lock.json",
+    ),
+    "MissingDeclaration": (
+        "schema-rejected",
+        "the lock must declare nodes.qiven-devkit.commit (40-hex): update the "
+        "workspace lock through the resolver lock-update path",
+    ),
+    "DuplicateKey": (
+        "schema-rejected",
+        "edit workspace.lock.json to remove the duplicated key (the strict parse "
+        "rejects duplicates)",
+    ),
+    "BootstrapDevkitMismatch": (
+        "policy-rejected",
+        "update the Devkit checkout to the locked commit, or advance the workspace "
+        "lock deliberately through the WR-8 trust-policy admission step (the "
+        "identity check fails before any Devkit import)",
+    ),
+    "DirtyDependency": (
+        "policy-rejected",
+        "commit or stash the Devkit working tree before authoritative mode (or "
+        "run shadow mode, which labels the dirt instead of refusing)",
+    ),
+}
+
+_CR_RULE_PATH = {
+    "WorkspaceNotFound": ("bootstrap/workspace-not-found", "workspace.json"),
+    "MissingDeclaration": ("bootstrap/missing-declaration", "workspace.lock.json"),
+    "DuplicateKey": ("bootstrap/duplicate-key", "workspace.lock.json"),
+    "RevisionUnavailable": ("bootstrap/revision-unavailable", "git"),
+    "BootstrapDevkitMismatch": ("bootstrap/devkit-mismatch", "workspace.lock.json"),
+    "DirtyDependency": ("bootstrap/dirty-dependency", "qiven-devkit checkout"),
+    "PreflightTimeout": ("bootstrap/preflight-timeout", "workspace_resolver.py"),
+}
+
+
+def _cr_operation_id() -> str:
+    """Collision-resistant operation id (ADR-0060 D6: stamp + pid + rand)."""
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    return f"{stamp}-{os.getpid():08d}-{os.urandom(3).hex()}"
+
+
+def _typed_error_record(kind: str, message: str) -> dict:
+    """One Common Record v1 object for a typed bootstrap failure."""
+    rule_id, path = _CR_RULE_PATH.get(kind, (f"bootstrap/{kind.lower()}", "bootstrap"))
+    fix = _CR_FIX_TABLE.get(kind)
+    if fix is None and kind == "RevisionUnavailable" and "no Devkit checkout" in message:
+        fix = (
+            "invocation-rejected",
+            "pass --devkit, set QIVEN_DEVKIT_CHECKOUT, or register the checkout in "
+            ".qiven-workspace.local.json (explicit locators, never selectors)",
+        )
+    if fix is not None:
+        event, supported_by = fix
+        action = {"invocation-rejected": "FIX", "schema-rejected": "FIX",
+                  "policy-rejected": "FIX"}[event]
+        next_action: dict = {"action": action, "supported_by": supported_by}
+    else:
+        # timeout/git classes: classify before retrying; the mechanism does
+        # NOT know a correction and must never invent a retry
+        next_action = {"action": "DIAGNOSE"}
+    finding = {
+        "rule_id": rule_id,
+        "location": {"path": path},
+        "actual": message,
+        "expected": "a resolvable, identity-checked workspace bootstrap input",
+        "contract_revision": "qiven-workspace-bootstrap-error-v1",
+    }
+    return {
+        "schema_version": _CR_VERSION,
+        "record_kind": "bootstrap-preflight",
+        "producer": {"id": "workspace-bootstrap-preflight", "version": "1"},
+        "operation": {
+            "id": _cr_operation_id(),
+            "repository": "qiven-workspace",
+            "cwd": os.getcwd(),
+            "invocation": "python bootstrap/qiven-bootstrap.py",
+        },
+        "observation": {"coherence": "coherent"},
+        "admission": {"state": "rejected", "reason": f"typed failure class {kind}"},
+        "completion": {"state": "completed"},
+        "domain_outcome": {"outcome": "failed", "exit_code": 1},
+        "coverage": {"collection": "complete", "executed": ["bootstrap-preflight"]},
+        "findings": [finding],
+        "next_action": next_action,
+        "evidence": [
+            {
+                "locator": "bootstrap stdout/stderr (this envelope)",
+                "layout": "stdout+stderr",
+                "completeness": "complete",
+            }
+        ],
+        "retry_state": {"side_effects": "not_started"},
+        "payload": {
+            "kind": "qiven-workspace-bootstrap-error-v1",
+            "locator": "stdout (this typed envelope)",
+        },
+    }
 
 
 def _gate_configure(args, control: Path, lock: dict) -> int:
@@ -361,8 +494,19 @@ def main(argv: list[str] | None = None) -> int:
                         "(hung preflight class - classify before retrying, do "
                         "not re-run blind)") from error
     except Typed as error:
-        print(json.dumps({"schema": "qiven-workspace-bootstrap-error-v1",
-                          "error": {"type": error.kind, "message": str(error)}}, indent=2))
+        # additive Common Record (ADR-0060 D3): the record rides the typed
+        # envelope as an OPTIONAL field; construction failure degrades to
+        # the legacy envelope shape (the typed failure itself must never
+        # be masked by record machinery)
+        try:
+            envelope_record = _typed_error_record(error.kind, str(error))
+        except (OSError, ValueError, KeyError):
+            envelope_record = None
+        envelope: dict = {"schema": "qiven-workspace-bootstrap-error-v1",
+                          "error": {"type": error.kind, "message": str(error)}}
+        if envelope_record is not None:
+            envelope["record"] = envelope_record
+        print(json.dumps(envelope, indent=2))
         return 1
     if result.returncode != 0:
         _print_captured_failure("resolver-preflight", result.stdout, result.stderr)
