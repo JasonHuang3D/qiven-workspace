@@ -219,11 +219,15 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
         _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
         return 1
     if receipt.get("workspace_generation") != lock.get("generation"):
-        print("[FAIL] adapter generation does not match the lock", file=sys.stderr)
+        print("[FAIL] adapter generation does not match the lock "
+              f"(receipt says {receipt.get('workspace_generation')!r}, lock says "
+              f"{lock.get('generation')!r})", file=sys.stderr)
+        _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
         return 1
     adapter_path = receipt.get("adapter_path", "")
     if not adapter_path or not Path(adapter_path).is_file():
         print("[FAIL] adapter receipt names no adapter file", file=sys.stderr)
+        _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
         return 1
     receipt["bootstrap_notes"] = notes
 
@@ -235,6 +239,7 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     if not adapter_sha or not target_rev:
         missing = "adapter_sha256" if not adapter_sha else "target_revision"
         print(f"[FAIL] adapter receipt carries no {missing}", file=sys.stderr)
+        _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
         return 1
     print(f"[qiven-workspace] adapter {adapter_sha[:19]} "
           f"generation {receipt['workspace_generation'][:19]} mode {args.mode}")
@@ -317,7 +322,10 @@ def main(argv: list[str] | None = None) -> int:
         _print_labeled_streams("resolver-preflight", result.stdout, result.stderr)
         return 1
     if receipt.get("workspace_generation") != lock.get("generation"):
-        print("[FAIL] preflight generation does not match the lock", file=sys.stderr)
+        print("[FAIL] preflight generation does not match the lock "
+              f"(receipt says {receipt.get('workspace_generation')!r}, lock says "
+              f"{lock.get('generation')!r})", file=sys.stderr)
+        _print_labeled_streams("resolver-preflight", result.stdout, result.stderr)
         return 1
     receipt["bootstrap_notes"] = notes
     print(json.dumps(receipt, indent=2, sort_keys=True))
