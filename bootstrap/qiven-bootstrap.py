@@ -40,6 +40,11 @@ GIT_TIMEOUT = 15
 PREFLIGHT_TIMEOUT = 120
 ADAPTER_TIMEOUT = 120
 CONFIGURE_TIMEOUT = 900
+# bounded failure-stream excerpts (P0 repair R6a): a failing child's
+# captured stream renders head+tail with a truthful omitted-byte marker;
+# budgets are UTF-8 bytes with slices on character boundaries
+STREAM_EXCERPT_HEAD_BYTES = 1024
+STREAM_EXCERPT_TAIL_BYTES = 1024
 
 
 class Typed(Exception):
@@ -139,6 +144,37 @@ def _identity_check(checkout: Path, node: dict, strict_clean: bool) -> list[str]
     return notes
 
 
+def _bounded_stream(text: str) -> str:
+    """Bounded head/tail excerpt of one captured stream. The marker
+    carries the true omitted byte count (measured on the UTF-8 encoding,
+    never character counts); slice boundaries land on character
+    boundaries so localized diagnostics stay byte-faithful."""
+    text = text.strip()
+    if not text:
+        return "(nothing captured)"
+    encoded = text.encode("utf-8")
+    if len(encoded) <= STREAM_EXCERPT_HEAD_BYTES + STREAM_EXCERPT_TAIL_BYTES:
+        return text
+    head = encoded[:STREAM_EXCERPT_HEAD_BYTES].decode("utf-8", errors="ignore")
+    tail = encoded[-STREAM_EXCERPT_TAIL_BYTES:].decode("utf-8", errors="ignore")
+    omitted = len(encoded) - len(head.encode("utf-8")) - len(tail.encode("utf-8"))
+    return f"{head}\n[... {omitted} bytes omitted ...]\n{tail}"
+
+
+def _print_captured_failure(stage: str, stdout: str, stderr: str) -> None:
+    """Render BOTH captured streams of a failed child, labeled and
+    bounded (P0 repair R6a): the former `stdout or stderr` relay silently
+    discarded one stream whenever the other was non-empty, leaving the
+    consumer unable to know it existed. Both streams stay bounded here;
+    the caller's captured CompletedProcess retains the full texts for
+    this process's lifetime."""
+    print(f"[FAIL] {stage} failed; both captured streams follow")
+    print(f"[{stage} stdout]")
+    print(_bounded_stream(stdout))
+    print(f"[{stage} stderr]")
+    print(_bounded_stream(stderr))
+
+
 def _gate_configure(args, control: Path, lock: dict) -> int:
     """WR-3: emit the target's adapter via the LOCKED resolver, then run the
     approved CMake configure preset with QIVEN_RESOLUTION_FILE set (doc 01
@@ -162,7 +198,7 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     except subprocess.TimeoutExpired as error:
         raise Typed("RevisionUnavailable", f"resolver adapter timed out: {error}") from error
     if result.returncode != 0:
-        print(result.stdout.strip() or result.stderr.strip())
+        _print_captured_failure("resolver-adapter", result.stdout, result.stderr)
         return 1
     try:
         receipt = json.loads(result.stdout)
@@ -256,7 +292,7 @@ def main(argv: list[str] | None = None) -> int:
                           "error": {"type": error.kind, "message": str(error)}}, indent=2))
         return 1
     if result.returncode != 0:
-        print(result.stdout.strip() or result.stderr.strip())
+        _print_captured_failure("resolver-preflight", result.stdout, result.stderr)
         return 1
     try:
         receipt = json.loads(result.stdout)
