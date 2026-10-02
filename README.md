@@ -6,6 +6,15 @@ Resolution program (ADR-0052; accepted architecture in qiven-docs
 It carries dependency-control data and bootstrap only — no product
 semantics, no canonical cognition, no execution authority.
 
+Scope/lifecycle note: this birth-certificate self-description names
+the program that first delivered the mechanism. The workspace's
+standing semantics (declared working set + identity/resolution
+authority + shared enforcement substrate; first-class consumers
+beyond builds, incl. the local agent chain) are under deliberation in
+qiven-docs PR #13 - until that adjudication lands, this README's
+program framing is historical-origin wording, not a semantic
+boundary.
+
 ## First-class consumer (owner direction 2026-09-30, C-059)
 
 The consumer of this repository's surfaces (bootstrap CLI, launcher,
@@ -70,7 +79,7 @@ Canonical usage for every Qiven mechanism — operator subcommands
 (`surface` lists a repo's gates/tasks O(1); `records` reads back operator
 records), the workspace mechanisms above, the devkit tool surfaces
 (schema-check `--list`, deploy bundle) — is
-qiven-devkit `docs/conventions/operator-usage.md`, reachable from each
+qiven-devkit `docs/conventions/operator-usage.md`, reachable from each product
 repository's AGENTS.md pointer chain. This README stays the authority for
 locator vocabulary, the trust policy and the WR history.
 
