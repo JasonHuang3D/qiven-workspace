@@ -41,6 +41,18 @@ is mechanical (missing/duplicate lock data, wrong devkit revision, no
 devkit locator, dirty authoritative dependency), DIAGNOSE
 classify-before-retry for the timeout classes (never an invented
 retry).
+
+Envelope unification (P0 repair batch B2, SG-3, 2026-10-02): the
+gate-configure return-1 paths (resolver adapter child failure, no
+parseable receipt, generation mismatch, incomplete receipt content,
+cmake rc failure) emit the SAME typed envelope + record machinery the
+preflight paths use - the banner + labeled both-streams evidence stay
+verbatim first (their bytes are pinned by the devkit bootstrap
+contract test), then the site raises Typed and main()'s handler emits
+the qiven-workspace-bootstrap-error-v1 envelope with a
+gate-configure-recorded Common Record. The configure-timeout exit 3
+site keeps its own carrier (documented availability class; it is not a
+return-1 path).
 """
 
 from __future__ import annotations
@@ -68,6 +80,9 @@ class Typed(Exception):
     def __init__(self, kind: str, message: str) -> None:
         super().__init__(f"{kind}: {message}")
         self.kind = kind
+        # optional Common Record routing (B2 / SG-3): gate-configure sites
+        # set this via _gate_typed; None keeps the preflight default shape
+        self.record_routing: dict | None = None
 
 
 def _no_duplicate_keys(pairs):
@@ -260,6 +275,30 @@ _CR_RULE_PATH = {
     "PreflightTimeout": ("bootstrap/preflight-timeout", "workspace_resolver.py"),
 }
 
+# --- gate-configure record surface (B2 / SG-3) ------------------------------
+# The gate-configure return-1 classes carry their own rule ids and
+# class-aware next actions: unexpected child/configure failures DIAGNOSE
+# (classify the relayed evidence before retrying); the generation mismatch
+# is a two-route lock-state reconciliation the mechanism names but does
+# not choose (the FIX names both routes, mirroring the resolver's own
+# GenerationMismatch law).
+
+_CR_GATE_RULE_PATH = {
+    "AdapterFailed": ("gate-configure/adapter-failed", "workspace_resolver.py"),
+    "AdapterNoReceipt": ("gate-configure/adapter-no-receipt", "resolver stdout"),
+    "GenerationMismatch": ("gate-configure/generation-mismatch", "workspace.lock.json"),
+    "AdapterReceiptIncomplete": ("gate-configure/adapter-receipt-incomplete", "resolver receipt"),
+    "ConfigureFailed": ("gate-configure/configure-failed", "cmake --preset"),
+}
+
+_CR_GATE_FIX = {
+    "GenerationMismatch": (
+        "restore workspace.lock.json from control history, or advance it "
+        "deliberately through a lock-update transaction (choose the direction "
+        "deliberately; the relayed adapter receipt names both generations)",
+    ),
+}
+
 
 def _cr_operation_id() -> str:
     """Collision-resistant operation id (ADR-0060 D6: stamp + pid + rand)."""
@@ -267,47 +306,59 @@ def _cr_operation_id() -> str:
     return f"{stamp}-{os.getpid():08d}-{os.urandom(3).hex()}"
 
 
-def _typed_error_record(kind: str, message: str) -> dict:
-    """One Common Record v1 object for a typed bootstrap failure."""
-    rule_id, path = _CR_RULE_PATH.get(kind, (f"bootstrap/{kind.lower()}", "bootstrap"))
-    fix = _CR_FIX_TABLE.get(kind)
-    if fix is None and kind == "RevisionUnavailable" and "no Devkit checkout" in message:
-        fix = (
-            "invocation-rejected",
-            "pass --devkit, set QIVEN_DEVKIT_CHECKOUT, or register the checkout in "
-            ".qiven-workspace.local.json (explicit locators, never selectors)",
-        )
-    if fix is not None:
-        event, supported_by = fix
-        action = {"invocation-rejected": "FIX", "schema-rejected": "FIX",
-                  "policy-rejected": "FIX"}[event]
-        next_action: dict = {"action": action, "supported_by": supported_by}
-    else:
-        # timeout/git classes: classify before retrying; the mechanism does
-        # NOT know a correction and must never invent a retry
-        next_action = {"action": "DIAGNOSE"}
+def _typed_error_record(kind: str, message: str, *,
+                        producer_id: str = "workspace-bootstrap-preflight",
+                        record_kind: str = "bootstrap-preflight",
+                        invocation: str = "python bootstrap/qiven-bootstrap.py",
+                        rule_path: tuple[str, str] | None = None,
+                        next_action: dict | None = None) -> dict:
+    """One Common Record v1 object for a typed bootstrap failure.
+
+    Defaults preserve the preflight record shape byte-for-byte (register
+    row workspace-bootstrap-preflight is compliant); the gate-configure
+    sites pass their own producer identity, rule path and class-aware
+    next action (B2 / SG-3 unification)."""
+    if rule_path is None:
+        rule_path = _CR_RULE_PATH.get(kind, (f"bootstrap/{kind.lower()}", "bootstrap"))
+    if next_action is None:
+        fix = _CR_FIX_TABLE.get(kind)
+        if fix is None and kind == "RevisionUnavailable" and "no Devkit checkout" in message:
+            fix = (
+                "invocation-rejected",
+                "pass --devkit, set QIVEN_DEVKIT_CHECKOUT, or register the checkout in "
+                ".qiven-workspace.local.json (explicit locators, never selectors)",
+            )
+        if fix is not None:
+            event, supported_by = fix
+            action = {"invocation-rejected": "FIX", "schema-rejected": "FIX",
+                      "policy-rejected": "FIX"}[event]
+            next_action = {"action": action, "supported_by": supported_by}
+        else:
+            # timeout/git classes: classify before retrying; the mechanism does
+            # NOT know a correction and must never invent a retry
+            next_action = {"action": "DIAGNOSE"}
     finding = {
-        "rule_id": rule_id,
-        "location": {"path": path},
+        "rule_id": rule_path[0],
+        "location": {"path": rule_path[1]},
         "actual": message,
         "expected": "a resolvable, identity-checked workspace bootstrap input",
         "contract_revision": "qiven-workspace-bootstrap-error-v1",
     }
     return {
         "schema_version": _CR_VERSION,
-        "record_kind": "bootstrap-preflight",
-        "producer": {"id": "workspace-bootstrap-preflight", "version": "1"},
+        "record_kind": record_kind,
+        "producer": {"id": producer_id, "version": "1"},
         "operation": {
             "id": _cr_operation_id(),
             "repository": "qiven-workspace",
             "cwd": os.getcwd(),
-            "invocation": "python bootstrap/qiven-bootstrap.py",
+            "invocation": invocation,
         },
         "observation": {"coherence": "coherent"},
         "admission": {"state": "rejected", "reason": f"typed failure class {kind}"},
         "completion": {"state": "completed"},
         "domain_outcome": {"outcome": "failed", "exit_code": 1},
-        "coverage": {"collection": "complete", "executed": ["bootstrap-preflight"]},
+        "coverage": {"collection": "complete", "executed": [record_kind]},
         "findings": [finding],
         "next_action": next_action,
         "evidence": [
@@ -323,6 +374,28 @@ def _typed_error_record(kind: str, message: str) -> dict:
             "locator": "stdout (this typed envelope)",
         },
     }
+
+
+def _gate_typed(kind: str, message: str) -> Typed:
+    """Build the gate-configure Typed failure carrying its record routing
+    (B2 / SG-3): the exception itself transports the record parameters so
+    main()'s single handler emits the unified envelope for both stages."""
+    error = Typed(kind, message)
+    rule_path = _CR_GATE_RULE_PATH.get(kind, (f"gate-configure/{kind.lower()}", "gate-configure"))
+    if kind in _CR_GATE_FIX:
+        next_action = {"action": "FIX", "supported_by": _CR_GATE_FIX[kind][0]}
+    else:
+        # unexpected child/configure failures: classify the relayed evidence
+        # before retrying; no correction is mechanically known here
+        next_action = {"action": "DIAGNOSE"}
+    error.record_routing = {
+        "producer_id": "workspace-bootstrap-gate-configure",
+        "record_kind": "bootstrap-gate-configure",
+        "invocation": "python bootstrap/qiven-bootstrap.py gate-configure",
+        "rule_path": rule_path,
+        "next_action": next_action,
+    }
+    return error
 
 
 def _gate_configure(args, control: Path, lock: dict) -> int:
@@ -349,7 +422,12 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
         raise Typed("RevisionUnavailable", f"resolver adapter timed out: {error}") from error
     if result.returncode != 0:
         _print_captured_failure("resolver-adapter", result.stdout, result.stderr)
-        return 1
+        raise _gate_typed(
+            "AdapterFailed",
+            f"resolver adapter exited rc={result.returncode}; both captured "
+            "streams relayed above - the child's own typed envelope names "
+            "its cause",
+        )
     try:
         receipt = json.loads(result.stdout)
     except json.JSONDecodeError:
@@ -360,13 +438,22 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
         print("[FAIL] resolver adapter emitted no receipt (captured child output follows)",
               file=sys.stderr)
         _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
-        return 1
+        raise _gate_typed(
+            "AdapterNoReceipt",
+            "resolver adapter exited 0 but emitted no parseable receipt; the "
+            "captured payload is relayed above (labeled, bounded)",
+        )
     if receipt.get("workspace_generation") != lock.get("generation"):
         print("[FAIL] adapter generation does not match the lock "
               f"(receipt says {receipt.get('workspace_generation')!r}, lock says "
               f"{lock.get('generation')!r})", file=sys.stderr)
         _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
-        return 1
+        raise _gate_typed(
+            "GenerationMismatch",
+            f"adapter generation does not match the lock (receipt says "
+            f"{receipt.get('workspace_generation')!r}, lock says "
+            f"{lock.get('generation')!r})",
+        )
     adapter_path = receipt.get("adapter_path", "")
     if not adapter_path or not Path(adapter_path).is_file():
         # R6a completeness: receipt-content failure sites name the actual
@@ -376,7 +463,12 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
               f"(received adapter_path={adapter_path!r}; expected a path "
               "naming an existing file)", file=sys.stderr)
         _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
-        return 1
+        raise _gate_typed(
+            "AdapterReceiptIncomplete",
+            f"adapter receipt names no adapter file (received "
+            f"adapter_path={adapter_path!r}; expected a path naming an "
+            "existing file)",
+        )
     receipt["bootstrap_notes"] = notes
 
     configure_cmd = [args.cmake, "--preset", args.preset]
@@ -393,7 +485,11 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
               f"(received {missing}={received!r}; expected a non-empty value)",
               file=sys.stderr)
         _print_labeled_streams("resolver-adapter", result.stdout, result.stderr)
-        return 1
+        raise _gate_typed(
+            "AdapterReceiptIncomplete",
+            f"adapter receipt carries no {missing} (received {missing}="
+            f"{received!r}; expected a non-empty value)",
+        )
     print(f"[qiven-workspace] adapter {adapter_sha[:19]} "
           f"generation {receipt['workspace_generation'][:19]} mode {args.mode}")
     try:
@@ -410,7 +506,11 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
         return 3
     if configure.returncode != 0:
         print(f"[FAIL] cmake --preset {args.preset} rc={configure.returncode}", file=sys.stderr)
-        return 1
+        raise _gate_typed(
+            "ConfigureFailed",
+            f"cmake --preset {args.preset} rc={configure.returncode} "
+            "(unexpected configure failure class)",
+        )
     receipt_path = Path(adapter_path).parent / "gate-receipt.json"
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n",
                             encoding="utf-8", newline="\n")
@@ -497,9 +597,21 @@ def main(argv: list[str] | None = None) -> int:
         # additive Common Record (ADR-0060 D3): the record rides the typed
         # envelope as an OPTIONAL field; construction failure degrades to
         # the legacy envelope shape (the typed failure itself must never
-        # be masked by record machinery)
+        # be masked by record machinery). Gate-configure sites carry their
+        # own record routing (B2 / SG-3 unification); preflight keeps the
+        # default routing byte-identical to the compliant v1 shape.
+        routing = getattr(error, "record_routing", None)
         try:
-            envelope_record = _typed_error_record(error.kind, str(error))
+            if routing is not None:
+                envelope_record = _typed_error_record(
+                    error.kind, str(error),
+                    producer_id=routing["producer_id"],
+                    record_kind=routing["record_kind"],
+                    invocation=routing["invocation"],
+                    rule_path=routing["rule_path"],
+                    next_action=routing["next_action"])
+            else:
+                envelope_record = _typed_error_record(error.kind, str(error))
         except (OSError, ValueError, KeyError):
             envelope_record = None
         envelope: dict = {"schema": "qiven-workspace-bootstrap-error-v1",

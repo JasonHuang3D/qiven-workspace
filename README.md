@@ -29,8 +29,8 @@ over to the WorkspaceGeneration under ADR-0058.
 | `workspace.json` | node universe (schema `qiven-workspace-v1`, qiven-devkit `docs/schemas/`) |
 | `workspace.lock.json` | immutable revision snapshot (`qiven-workspace-lock-v1`); generation digest is path-independent |
 | `declarations/*.json` | per-node repository-manifest declaration cache (written by lock-update transactions) |
-| `bootstrap/qiven-bootstrap.py` | stdlib-only bootstrap: validates the lock subset, identity-checks the locked Devkit BEFORE any import, runs the locked resolver in preflight mode or gates a configure (`gate-configure`) |
-| `qiven.cmd` | thin UX launcher (WG-5 = WorkspaceGeneration task 5): no discovery, no pins, no fallbacks |
+| `bootstrap/qiven-bootstrap.py` | stdlib-only bootstrap: validates the lock subset, identity-checks the locked Devkit BEFORE any import, runs the locked resolver in preflight mode or gates a configure (`gate-configure`); every typed failure — preflight AND the gate-configure return-1 sites — emits the `qiven-workspace-bootstrap-error-v1` envelope with an additive Common Record (`rule_id` + `next_action`; ADR-0060 D3) |
+| `qiven.cmd` | thin UX launcher (WG-5): no discovery, no pins, no fallbacks; the only launcher-owned surface is a typed interpreter-availability probe (four-element `[FAIL]` carrier, exit 2) and verbatim argv/exit-code forwarding to the bootstrap |
 
 The sealed WR-0 census served legacy commits through the WR-3..WR-8
 migrations and was REMOVED 2026-09-28 (owner direction; history retains
