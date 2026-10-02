@@ -258,6 +258,12 @@ _CR_FIX_TABLE: dict[str, tuple[str, str]] = {
         "lock deliberately through the WR-8 trust-policy admission step (the "
         "identity check fails before any Devkit import)",
     ),
+    "PreflightGenerationMismatch": (
+        "policy-rejected",
+        "restore workspace.lock.json from control history, or advance it "
+        "deliberately through a lock-update transaction (choose the direction "
+        "deliberately; the relayed preflight receipt names both generations)",
+    ),
     "DirtyDependency": (
         "policy-rejected",
         "commit or stash the Devkit working tree before authoritative mode (or "
@@ -273,6 +279,10 @@ _CR_RULE_PATH = {
     "BootstrapDevkitMismatch": ("bootstrap/devkit-mismatch", "workspace.lock.json"),
     "DirtyDependency": ("bootstrap/dirty-dependency", "qiven-devkit checkout"),
     "PreflightTimeout": ("bootstrap/preflight-timeout", "workspace_resolver.py"),
+    "PreflightFailed": ("bootstrap/preflight-failed", "workspace_resolver.py"),
+    "PreflightNoReceipt": ("bootstrap/preflight-no-receipt", "resolver stdout"),
+    "PreflightGenerationMismatch": ("bootstrap/preflight-generation-mismatch",
+                                    "workspace.lock.json"),
 }
 
 # --- gate-configure record surface (B2 / SG-3) ------------------------------
@@ -519,6 +529,38 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     return 0
 
 
+def _emit_typed_envelope(error: Typed) -> int:
+    """Emit the qiven-workspace-bootstrap-error-v1 envelope for a typed
+    failure and return exit 1. Shared by main()'s handler and the
+    resolver-preflight child-interaction return-1 sites (which sit after
+    the outer try block; B-F6 alignment). The record rides the envelope
+    as an OPTIONAL field; construction failure degrades to the legacy
+    envelope shape (the typed failure itself must never be masked by
+    record machinery). Gate-configure errors carry their own record
+    routing (B2 / SG-3 unification); preflight keeps the default routing
+    byte-identical to the compliant v1 shape."""
+    routing = getattr(error, "record_routing", None)
+    try:
+        if routing is not None:
+            envelope_record = _typed_error_record(
+                error.kind, str(error),
+                producer_id=routing["producer_id"],
+                record_kind=routing["record_kind"],
+                invocation=routing["invocation"],
+                rule_path=routing["rule_path"],
+                next_action=routing["next_action"])
+        else:
+            envelope_record = _typed_error_record(error.kind, str(error))
+    except (OSError, ValueError, KeyError):
+        envelope_record = None
+    envelope: dict = {"schema": "qiven-workspace-bootstrap-error-v1",
+                      "error": {"type": error.kind, "message": str(error)}}
+    if envelope_record is not None:
+        envelope["record"] = envelope_record
+    print(json.dumps(envelope, indent=2))
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     # SUPPRESS defaults are the load-bearing part (P0 A2 defect a, the
     # same pattern as qiven_operator._common_flags): every subparser
@@ -594,35 +636,17 @@ def main(argv: list[str] | None = None) -> int:
                         "(hung preflight class - classify before retrying, do "
                         "not re-run blind)") from error
     except Typed as error:
-        # additive Common Record (ADR-0060 D3): the record rides the typed
-        # envelope as an OPTIONAL field; construction failure degrades to
-        # the legacy envelope shape (the typed failure itself must never
-        # be masked by record machinery). Gate-configure sites carry their
-        # own record routing (B2 / SG-3 unification); preflight keeps the
-        # default routing byte-identical to the compliant v1 shape.
-        routing = getattr(error, "record_routing", None)
-        try:
-            if routing is not None:
-                envelope_record = _typed_error_record(
-                    error.kind, str(error),
-                    producer_id=routing["producer_id"],
-                    record_kind=routing["record_kind"],
-                    invocation=routing["invocation"],
-                    rule_path=routing["rule_path"],
-                    next_action=routing["next_action"])
-            else:
-                envelope_record = _typed_error_record(error.kind, str(error))
-        except (OSError, ValueError, KeyError):
-            envelope_record = None
-        envelope: dict = {"schema": "qiven-workspace-bootstrap-error-v1",
-                          "error": {"type": error.kind, "message": str(error)}}
-        if envelope_record is not None:
-            envelope["record"] = envelope_record
-        print(json.dumps(envelope, indent=2))
-        return 1
+        # additive Common Record (ADR-0060 D3), shared emission with the
+        # post-try resolver-preflight child-interaction sites (B-F6)
+        return _emit_typed_envelope(error)
     if result.returncode != 0:
         _print_captured_failure("resolver-preflight", result.stdout, result.stderr)
-        return 1
+        return _emit_typed_envelope(Typed(
+            "PreflightFailed",
+            f"resolver preflight exited rc={result.returncode}; both captured "
+            "streams relayed above - the child's own typed envelope names "
+            "its cause",
+        ))
     try:
         receipt = json.loads(result.stdout)
     except json.JSONDecodeError:
@@ -631,13 +655,22 @@ def main(argv: list[str] | None = None) -> int:
         print("[FAIL] resolver preflight emitted no receipt (captured child output follows)",
               file=sys.stderr)
         _print_labeled_streams("resolver-preflight", result.stdout, result.stderr)
-        return 1
+        return _emit_typed_envelope(Typed(
+            "PreflightNoReceipt",
+            "resolver preflight exited 0 but emitted no parseable receipt; "
+            "the captured payload is relayed above (labeled, bounded)",
+        ))
     if receipt.get("workspace_generation") != lock.get("generation"):
         print("[FAIL] preflight generation does not match the lock "
               f"(receipt says {receipt.get('workspace_generation')!r}, lock says "
               f"{lock.get('generation')!r})", file=sys.stderr)
         _print_labeled_streams("resolver-preflight", result.stdout, result.stderr)
-        return 1
+        return _emit_typed_envelope(Typed(
+            "PreflightGenerationMismatch",
+            f"preflight generation does not match the lock (receipt says "
+            f"{receipt.get('workspace_generation')!r}, lock says "
+            f"{lock.get('generation')!r})",
+        ))
     receipt["bootstrap_notes"] = notes
     print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0
