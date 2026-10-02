@@ -1,5 +1,5 @@
 {
-  "generation": "sha256:685b0aedb441dd4e952f1129eb9b0cdc9168e5c6f7540032e95209e90ee42417",
+  "generation": "sha256:8f83744eff3d98d66751a9a15dca824a3d5b09568c230f4f99dbb1da64dd1da8",
   "nodes": {
     "qiven-context": {
       "commit": "8a81b9b87c9815503e82feaef5df5605653c1397",
@@ -24,7 +24,7 @@
       "tree": "b608698eb9fc867e23eda9d142cc27d2f18792ec"
     },
     "qiven-devkit": {
-      "commit": "db815717c93e478022c1c9fb7ce3b0757f48b1bf",
+      "commit": "bef4e4a427d2999fc14c40a7f50d0d62870f74eb",
       "declaration": {
         "blob": "e0fd43a411ce73722fe07620bd0d86daef7a6037",
         "digest": "sha256:9370c384bec7cad47f109214e0e0ea8526ed63b47e289156c8c647b4558ecadd",
@@ -32,7 +32,7 @@
         "path": "declarations/qiven-devkit.json",
         "shadow_only": false
       },
-      "tree": "c2a3359f4fce965fe9661d11a0027d1473641c7c"
+      "tree": "80f4d6ad3d4645650cba7a8b97352e832bc0efe0"
     },
     "qiven-docs": {
       "commit": "cb829f736e219bdd277604c9232602f82a01a403",
@@ -68,7 +68,7 @@
       "tree": "70c9c480c6a45780c97700bbd22b4f288b649fa1"
     },
     "qiven-runtime": {
-      "commit": "0e93b0f938c17ec2c2b444e2cf9555eeb70e68fb",
+      "commit": "7b5987f3b1b1fc396a39702b4a7cac7c4e575d12",
       "declaration": {
         "blob": "d2a842644c6253f8b343753e80dfdd77e1c8abfc",
         "digest": "sha256:767aca02947dcc98c520614997a6ec97f2ee1cb6a5583214188f5e8ac8a7486e",
@@ -76,7 +76,7 @@
         "path": "declarations/qiven-runtime.json",
         "shadow_only": false
       },
-      "tree": "1300b24dceebeb02363d8b5d32a862d1887deb46"
+      "tree": "5e63ce243726fbe765b18bf181b9bcfb5a229264"
     },
     "qiven-third-party-win": {
       "commit": "b7cfca35e4eaef4e3c35a511eb109f7f9f9285b3",
@@ -91,7 +91,7 @@
       "tree": "95b999ad695fcd1f8a443c9745b345100bbb9589"
     },
     "qiven-toolchain-win": {
-      "commit": "a889c62f382b1ce1871f12bb09b091d831189011",
+      "commit": "a6724486eaf8cbad669c5fe40419456e0b5226f4",
       "declaration": {
         "blob": "1da5c3dc7f78d30a5468a3bd3bf9b3e3c08ca4b5",
         "digest": "sha256:92283f692f37ebe2342d9b483144003615fca39a7c66e8819fe06af14c420206",
@@ -100,7 +100,7 @@
         "shadow_only": false
       },
       "platform": "windows",
-      "tree": "5d682b9ac2b0480ed6bda409907b425150e7e490"
+      "tree": "dda8458e9bb2c203899ef3b01d967ada9b259fa1"
     }
   },
   "schema": "qiven-workspace-lock-v1",
