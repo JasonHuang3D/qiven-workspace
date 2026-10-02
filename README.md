@@ -50,7 +50,29 @@ Authoritative (requires the trust policy):
 
 Lock movement (the resolver's `lock-update` is the lock's only writer;
 the session commits the emitted lock + declaration cache as one
-auditable transaction).
+auditable transaction). Exact invocation shape (validation-only default;
+`--apply` writes the transaction into this control tree):
+
+    python <devkit>/tools/workspace_resolver.py lock-update \
+        --control <this-repo> --move NODE=<checkout> [--move NODE2=<checkout2>]
+    # authoritative movement adds:
+    #   --mode authoritative --trust-policy <qiven-context>/governance/workspace-control-trust-policy.json --apply
+
+`--move` targets must be clean at their exact HEAD and are
+identity-checked; the receipt lands under
+`<workspace-root>/.generated-temp/workspace-resolver/<stamp>-lock-update/receipt.json`.
+The receipt's `next_action` names the remaining step (`--apply` mode:
+commit this control repository now).
+
+## Discovery surface (B6)
+
+Canonical usage for every Qiven mechanism — operator subcommands
+(`surface` lists a repo's gates/tasks O(1); `records` reads back operator
+records), the workspace mechanisms above, the devkit tool surfaces
+(schema-check `--list`, deploy bundle) — is
+qiven-devkit `docs/conventions/operator-usage.md`, reachable from each
+repository's AGENTS.md pointer chain. This README stays the authority for
+locator vocabulary, the trust policy and the WR history.
 
 ## Locator vocabulary (env > local mapping > sibling)
 
