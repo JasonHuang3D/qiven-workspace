@@ -22,9 +22,8 @@ Devkit locator precedence (symmetric with the control locator): explicit
 `--devkit` > env `QIVEN_DEVKIT_CHECKOUT` > `.qiven-workspace.local.json`
 checkouts > the control checkout's sibling `qiven-devkit`.
 
-Exit codes: 0 released / 1 typed failure (including environment) /
-2 argparse usage / 3 configure timeout (see the inline OBL note at the
-timeout site).
+Exit codes: 0 released / 1 typed failure (including environment and
+configure timeout) / 2 argparse usage.
 
 Common Record v1 (ADR-0060 D3; the B+D semantics + projection batch,
 2026-10-02): every typed failure envelope gains an additive OPTIONAL
@@ -50,9 +49,9 @@ preflight paths use - the banner + labeled both-streams evidence stay
 verbatim first (their bytes are pinned by the devkit bootstrap
 contract test), then the site raises Typed and main()'s handler emits
 the qiven-workspace-bootstrap-error-v1 envelope with a
-gate-configure-recorded Common Record. The configure-timeout exit 3
-site keeps its own carrier (documented availability class; it is not a
-return-1 path).
+gate-configure-recorded Common Record. The configure-timeout site keeps
+its existing availability-class diagnostic before using that same
+envelope and record path.
 """
 
 from __future__ import annotations
@@ -299,6 +298,7 @@ _CR_GATE_RULE_PATH = {
     "GenerationMismatch": ("gate-configure/generation-mismatch", "workspace.lock.json"),
     "AdapterReceiptIncomplete": ("gate-configure/adapter-receipt-incomplete", "resolver receipt"),
     "ConfigureFailed": ("gate-configure/configure-failed", "cmake --preset"),
+    "ConfigureTimeout": ("gate-configure/configure-timeout", "cmake --preset"),
 }
 
 _CR_GATE_FIX = {
@@ -513,7 +513,12 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
               f"{CONFIGURE_TIMEOUT}s (ConfigureTimeout; hung configure "
               f"class - classify before retrying, do not re-run blind)",
               file=sys.stderr)
-        return 3
+        raise _gate_typed(
+            "ConfigureTimeout",
+            f"cmake --preset {args.preset} timed out after "
+            f"{CONFIGURE_TIMEOUT}s (hung configure class; classify before "
+            "retrying, do not re-run blind)",
+        ) from error
     if configure.returncode != 0:
         print(f"[FAIL] cmake --preset {args.preset} rc={configure.returncode}", file=sys.stderr)
         raise _gate_typed(
