@@ -1,0 +1,20 @@
+#!/bin/sh
+# qiven-workspace pre-push hook (ADR-0062 c4 lock blocking).
+# Blocks pushes whose range contains a workspace.lock.json-mutating
+# commit whose lock names an unpublished node commit. Activation
+# (machine-local):
+#   git config core.hooksPath tools/hooks
+# Python locator precedence: QIVEN_HOOK_PYTHON > repo .venv > PATH python.
+set -u
+hook_dir=$(cd "$(dirname "$0")" && pwd) || exit 1
+root=$(cd "$hook_dir/../.." && pwd) || exit 1
+if [ -n "${QIVEN_HOOK_PYTHON:-}" ]; then
+    python_bin=$QIVEN_HOOK_PYTHON
+elif [ -x "$root/.venv/Scripts/python.exe" ]; then
+    python_bin="$root/.venv/Scripts/python.exe"
+elif [ -x "$root/.venv/bin/python" ]; then
+    python_bin="$root/.venv/bin/python"
+else
+    python_bin=python
+fi
+exec "$python_bin" "$hook_dir/lock_guard.py" push
