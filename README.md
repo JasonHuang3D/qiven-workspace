@@ -80,7 +80,9 @@ commit this control repository now).
 merge or push mutating `workspace.lock.json` while a node in the NEW
 lock names a commit not reachable from that node repository's
 remote-tracking `refs/remotes/origin/main` — fail-closed against
-undeclared nodes, ambiguous mappings and missing sibling checkouts.
+undeclared nodes and missing sibling checkouts (an explicit
+`.qiven-workspace.local.json` entry deterministically wins over the
+sibling directory; there is no ambiguity to detect).
 Activation is machine-local: `git config core.hooksPath tools/hooks`.
 Verification uses remote-tracking refs (the last fetch, never the
 network): fetch in each node checkout before lock movement.
