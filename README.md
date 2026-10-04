@@ -73,6 +73,24 @@ identity-checked; the receipt lands under
 The receipt's `next_action` names the remaining step (`--apply` mode:
 commit this control repository now).
 
+## Lock-movement blocking hooks (ADR-0062 c4)
+
+`tools/hooks/` carries tracked git hooks (`pre-commit`,
+`pre-merge-commit`, `pre-push`) that mechanically block any commit,
+merge or push mutating `workspace.lock.json` while a node in the NEW
+lock names a commit not reachable from that node repository's
+remote-tracking `refs/remotes/origin/main` — fail-closed against
+undeclared nodes and missing sibling checkouts (an explicit
+`.qiven-workspace.local.json` entry deterministically wins over the
+sibling directory; there is no ambiguity to detect).
+Activation is machine-local: `git config core.hooksPath tools/hooks`.
+Verification uses remote-tracking refs (the last fetch, never the
+network): fetch in each node checkout before lock movement.
+Residuals — `--no-verify` bypasses hooks; freshness is bounded by the
+last fetch — are stated in `tools/hooks/README.md`, along with the
+sandbox test (`tools/hooks/lock_hooks_test.py`) that proves the
+blocking matrix end to end.
+
 ## Discovery surface (B6)
 
 Canonical usage for every Qiven mechanism — operator subcommands
