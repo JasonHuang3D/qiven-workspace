@@ -1,5 +1,5 @@
 {
-  "generation": "sha256:bf84880fbebe2c817b280b2271e253e0c2016406203116acd1341e4e56dc75df",
+  "generation": "sha256:7ab843e32793c047f6041a0b872922d4c848b3c27eed3361be9a313977647094",
   "nodes": {
     "qiven-context": {
       "commit": "794074a45e9e951d11e036f303f019d1b4ce5422",
@@ -24,7 +24,7 @@
       "tree": "b608698eb9fc867e23eda9d142cc27d2f18792ec"
     },
     "qiven-devkit": {
-      "commit": "50543282c96ea6e058f1e456ee99da7806719c4e",
+      "commit": "abf433d3a2864690aed49c2b85f7cfa412bb741f",
       "declaration": {
         "blob": "e0fd43a411ce73722fe07620bd0d86daef7a6037",
         "digest": "sha256:9370c384bec7cad47f109214e0e0ea8526ed63b47e289156c8c647b4558ecadd",
@@ -32,7 +32,7 @@
         "path": "declarations/qiven-devkit.json",
         "shadow_only": false
       },
-      "tree": "e006ed14a6337aafa4430eea9c735a883dc2078a"
+      "tree": "5a55d67fd655997f72b41aeb4043e3807cb1443e"
     },
     "qiven-docs": {
       "commit": "511ca150f74bf28947aa8e68589215932d2afebd",
