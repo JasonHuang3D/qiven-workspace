@@ -53,6 +53,13 @@ tools/hooks/pre-push`); Git for Windows executes them as-is.
 - `--no-verify` bypasses any git hook: mechanical blocking covers
   ordinary paths, not adversarial ones.
 - Remote-tracking freshness (above): fetch before lock movement.
+- Tracking-ref pedigree: `refs/remotes/origin/main` is trusted as the
+  node remote's state. Node commits are verified against the tracking
+  ref, but the tracking ref's own pedigree is NOT verified - neither
+  that the checkout's remote URL names the true node remote, nor that
+  the ref still matches the live remote beyond the last fetch
+  (freshness above). A rewritten, force-updated or wrongly-configured
+  remote can therefore satisfy publication verification.
 - A node commit that is an ANCESTOR of remote main counts as
   published (it was published earlier); the lock deliberately may sit
   behind a node's remote main.

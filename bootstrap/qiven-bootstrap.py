@@ -52,6 +52,15 @@ the qiven-workspace-bootstrap-error-v1 envelope with a
 gate-configure-recorded Common Record. The configure-timeout site keeps
 its existing availability-class diagnostic before using that same
 envelope and record path.
+
+Recovery envelope (audit C2, 2026-10-05): Common Record construction
+failure no longer drops the record - the envelope degrades to a MINIMAL
+VALID recovery record (static rule-path tables keyed by the typed kind
+plus a DIAGNOSE next_action) so every typed failure envelope keeps the
+recovery channel (rule_id + next_action). The fallback reads only the
+routing's PRESENCE, never its contents, and performs no message
+interpolation or environment access - a path that cannot fail the way
+full record construction can.
 """
 
 from __future__ import annotations
@@ -534,14 +543,83 @@ def _gate_configure(args, control: Path, lock: dict) -> int:
     return 0
 
 
+def _recovery_record(kind: object, routing: dict | None) -> dict:
+    """Minimal VALID Common Record v1 for record-construction failures
+    (audit C2): when full record construction raises, the envelope must
+    STILL carry the recovery channel - the failure class's rule_id plus
+    a next_action. Sources only static data on a path that cannot fail
+    the way full record construction can: rule paths come from the
+    frozen static tables keyed by the typed kind (dict .get, never
+    indexing), producer/record-kind/invocation discriminate on the
+    routing's PRESENCE (its contents may be exactly what failed), and
+    the next action is the single recovery channel DIAGNOSE - full
+    construction failed, so the operator classifies from the relayed
+    envelope; no correction is mechanically known here and none is
+    invented. No message interpolation, no environment reads, no
+    time/random stamps (the finding's ``actual`` states the degraded,
+    non-collision-resistant operation id this trade-off implies)."""
+    if not isinstance(kind, str) or not kind:
+        kind = "TypedFailure"
+    rule_path = (_CR_RULE_PATH.get(kind) or _CR_GATE_RULE_PATH.get(kind)
+                 or (f"bootstrap/{kind.lower()}", "bootstrap"))
+    if routing is not None:
+        producer_id = "workspace-bootstrap-gate-configure"
+        record_kind = "bootstrap-gate-configure"
+        invocation = "python bootstrap/qiven-bootstrap.py gate-configure"
+    else:
+        producer_id = "workspace-bootstrap-preflight"
+        record_kind = "bootstrap-preflight"
+        invocation = "python bootstrap/qiven-bootstrap.py"
+    return {
+        "schema_version": _CR_VERSION,
+        "record_kind": record_kind,
+        "producer": {"id": producer_id, "version": "1"},
+        "operation": {
+            "id": f"recovery-{kind.lower()}",
+            "repository": "qiven-workspace",
+            "invocation": invocation,
+        },
+        "observation": {"coherence": "coherent"},
+        "admission": {"state": "rejected", "reason": f"typed failure class {kind}"},
+        "completion": {"state": "completed"},
+        "domain_outcome": {"outcome": "failed", "exit_code": 1},
+        "coverage": {"collection": "complete", "executed": [record_kind]},
+        "findings": [{
+            "rule_id": rule_path[0],
+            "location": {"path": rule_path[1]},
+            "actual": "full Common Record construction failed; this minimal "
+                      "recovery record preserves the recovery channel (rule "
+                      "id + next action) with a static, non-collision-"
+                      "resistant operation id",
+            "expected": "a resolvable, identity-checked workspace bootstrap input",
+            "contract_revision": "qiven-workspace-bootstrap-error-v1",
+        }],
+        "next_action": {"action": "DIAGNOSE"},
+        "evidence": [
+            {
+                "locator": "bootstrap stdout/stderr (this envelope)",
+                "layout": "stdout+stderr",
+                "completeness": "complete",
+            }
+        ],
+        "retry_state": {"side_effects": "not_started"},
+        "payload": {
+            "kind": "qiven-workspace-bootstrap-error-v1",
+            "locator": "stdout (this typed envelope)",
+        },
+    }
+
+
 def _emit_typed_envelope(error: Typed) -> int:
     """Emit the qiven-workspace-bootstrap-error-v1 envelope for a typed
     failure and return exit 1. Shared by main()'s handler and the
     resolver-preflight child-interaction return-1 sites (which sit after
     the outer try block; B-F6 alignment). The record rides the envelope
-    as an OPTIONAL field; construction failure degrades to the legacy
-    envelope shape (the typed failure itself must never be masked by
-    record machinery). Gate-configure errors carry their own record
+    as an OPTIONAL field, but construction failure degrades to the
+    minimal VALID recovery record (_recovery_record, audit C2) instead
+    of the recordless legacy shape - every typed failure envelope keeps
+    rule_id + next_action, and the typed failure itself is never masked
+    by record machinery. Gate-configure errors carry their own record
     routing (B2 / SG-3 unification); preflight keeps the default routing
     byte-identical to the compliant v1 shape."""
     routing = getattr(error, "record_routing", None)
@@ -557,11 +635,12 @@ def _emit_typed_envelope(error: Typed) -> int:
         else:
             envelope_record = _typed_error_record(error.kind, str(error))
     except (OSError, ValueError, KeyError):
-        envelope_record = None
+        # C2: a construction failure must not drop the recovery channel
+        # (rule id + next action); degrade to the minimal valid record.
+        envelope_record = _recovery_record(error.kind, routing)
     envelope: dict = {"schema": "qiven-workspace-bootstrap-error-v1",
                       "error": {"type": error.kind, "message": str(error)}}
-    if envelope_record is not None:
-        envelope["record"] = envelope_record
+    envelope["record"] = envelope_record
     print(json.dumps(envelope, indent=2))
     return 1
 

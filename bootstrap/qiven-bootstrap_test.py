@@ -101,5 +101,92 @@ class ConfigureTimeoutEnvelopeTests(unittest.TestCase):
             self.assertEqual(len(calls), 2)
 
 
+class RecoveryEnvelopeTests(unittest.TestCase):
+    """Audit C2: record-construction failure keeps a minimal VALID
+    recovery record (rule_id + next_action) on every typed failure
+    envelope - the recovery channel must be PRESENT, not merely
+    in-vocabulary when present."""
+
+    REQUIRED_SECTIONS = (
+        "schema_version", "record_kind", "producer", "operation",
+        "observation", "admission", "completion", "domain_outcome",
+        "coverage", "findings", "next_action", "evidence", "retry_state",
+        "payload",
+    )
+
+    def _emit_with_broken_constructor(self, error):
+        """Run _emit_typed_envelope with full record construction
+        monkeypatched to raise (the C2 construction-failure simulation);
+        return (rc, parsed envelope)."""
+
+        def broken(*_args, **_kwargs):
+            raise ValueError("fixture: full record construction failed")
+
+        original = BOOTSTRAP._typed_error_record
+        BOOTSTRAP._typed_error_record = broken
+        stdout = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(stdout):
+                rc = BOOTSTRAP._emit_typed_envelope(error)
+        finally:
+            BOOTSTRAP._typed_error_record = original
+        output = stdout.getvalue()
+        envelope, _ = json.JSONDecoder().raw_decode(output[output.find("{"):])
+        return rc, envelope
+
+    def test_construction_failure_preflight_keeps_recovery_record(self) -> None:
+        rc, envelope = self._emit_with_broken_constructor(
+            BOOTSTRAP.Typed("PreflightTimeout", "fixture preflight timeout"))
+        self.assertEqual(rc, 1)
+        self.assertEqual(envelope["schema"], "qiven-workspace-bootstrap-error-v1")
+        self.assertEqual(envelope["error"]["type"], "PreflightTimeout")
+        self.assertIn("record", envelope)
+        record = envelope["record"]
+        self.assertEqual(record["record_kind"], "bootstrap-preflight")
+        self.assertEqual(record["producer"]["id"], "workspace-bootstrap-preflight")
+        self.assertEqual(record["findings"][0]["rule_id"], "bootstrap/preflight-timeout")
+        self.assertEqual(record["next_action"], {"action": "DIAGNOSE"})
+        self.assertEqual(record["domain_outcome"]["exit_code"], 1)
+
+    def test_construction_failure_gate_keeps_recovery_record(self) -> None:
+        rc, envelope = self._emit_with_broken_constructor(
+            BOOTSTRAP._gate_typed("ConfigureTimeout", "fixture configure timeout"))
+        self.assertEqual(rc, 1)
+        self.assertEqual(envelope["error"]["type"], "ConfigureTimeout")
+        record = envelope["record"]
+        self.assertEqual(record["record_kind"], "bootstrap-gate-configure")
+        self.assertEqual(record["producer"]["id"], "workspace-bootstrap-gate-configure")
+        self.assertEqual(record["findings"][0]["rule_id"],
+                         "gate-configure/configure-timeout")
+        self.assertEqual(record["next_action"], {"action": "DIAGNOSE"})
+
+    def test_every_failure_class_carries_recovery_channel(self) -> None:
+        """Channel-PRESENCE sweep: for EVERY typed failure class the
+        bootstrap can emit (both rule-path tables plus an unmapped kind
+        hitting the default path), a construction failure still leaves
+        rule_id + next_action on the envelope."""
+        gate_kinds = set(BOOTSTRAP._CR_GATE_RULE_PATH)
+        kinds = sorted(set(BOOTSTRAP._CR_RULE_PATH) | gate_kinds
+                       | {"UnmappedKind"})
+        self.assertGreater(len(kinds), 10)
+        for kind in kinds:
+            if kind in gate_kinds:
+                error = BOOTSTRAP._gate_typed(kind, f"fixture {kind}")
+            else:
+                error = BOOTSTRAP.Typed(kind, f"fixture {kind}")
+            with self.subTest(kind=kind):
+                rc, envelope = self._emit_with_broken_constructor(error)
+                self.assertEqual(rc, 1)
+                self.assertEqual(envelope["error"]["type"], kind)
+                self.assertIn("record", envelope)
+                record = envelope["record"]
+                for section in self.REQUIRED_SECTIONS:
+                    self.assertIn(section, record)
+                self.assertEqual(record["schema_version"], 1)
+                self.assertTrue(record["findings"][0]["rule_id"])
+                self.assertIn("action", record["next_action"])
+                self.assertEqual(record["next_action"]["action"], "DIAGNOSE")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
