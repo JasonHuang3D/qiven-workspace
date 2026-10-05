@@ -1,19 +1,67 @@
 # qiven-workspace
 
-The workspace control-plane repository of the Qiven Workspace Dependency
-Resolution program (ADR-0052; accepted architecture in qiven-docs
-`accepted/2026-09-24/01-qiven-workspace-resolution-architecture.md`).
-It carries dependency-control data and bootstrap only — no product
-semantics, no canonical cognition, no execution authority.
+The workspace's control-plane repository: its **identity ledger and
+graph validator** (semantic boundary below). It carries
+dependency-control data and bootstrap only — no product semantics, no
+canonical cognition. It does not own product behavior or execution
+authority, but it is not inert: it enforces dependency admission at
+operator import (devkit identity check with the shadow/authoritative
+mode boundary) and at native configure (validated resolution adapter
+and matching provider revisions).
 
-Scope/lifecycle note: this birth-certificate self-description names
-the program that first delivered the mechanism. The workspace's
-standing semantics (declared working set + identity/resolution
-authority + shared enforcement substrate; first-class consumers
-beyond builds, incl. the local agent chain) are under deliberation in
-qiven-docs PR #13 - until that adjudication lands, this README's
-program framing is historical-origin wording, not a semantic
-boundary.
+Mechanism origin, as a pointer rather than a boundary: delivered by
+the Qiven Workspace Dependency Resolution program (ADR-0052; accepted
+architecture in qiven-docs
+`accepted/2026-09-24/01-qiven-workspace-resolution-architecture.md`).
+
+## Semantic boundary — what the lock enforces and what it does not
+
+Adopted definition — accepted qiven-docs PR15 audit §9.4 (2026-10-04),
+adopted 2026-10-06:
+
+> qiven-workspace is the workspace's **identity ledger and graph
+> validator**: `workspace.lock.json` records one admitted (commit, tree)
+> per repository, `declarations/` binds each node to its
+> repository-owned manifest, and the WorkspaceGeneration digest makes
+> every graph state content-addressable and comparable. Standard WR-6
+> launchers check devkit commit/tree identity before operator import
+> and invoke resolver preflight, which validates all locked declarations
+> and their graph, including context/docs/math. The default shadow mode
+> labels dirty devkit changes and permits execution; authoritative mode
+> rejects them. Native configure separately requires a validated
+> resolution adapter and matching provider revisions. Thus the README's
+> "no execution authority" wording needs to distinguish owning product
+> behavior from enforcing dependency admission at import and configure.
+> Runtime CI materializes five dependency nodes (excluding context),
+> but that is not the graph validator's reading boundary. TCA consumes
+> context's locked identity and stamps WorkspaceGeneration as provenance,
+> not as content input; the activation surface reports the roster as
+> informational. The c4 lock-guard hooks require node commits to be
+> reachable from local origin/main tracking refs before lock publication;
+> that check does not prove remote freshness or node-side review pedigree.
+> Routine advances auto-admit by diff-shape. The evidence records both
+> real protections and recurring publication costs, without establishing
+> commensurable net-value balance.
+
+In operational terms, the lock enforces:
+
+- **Devkit identity at import** — launchers check the locked devkit
+  (commit, tree) before any operator import; default shadow mode
+  labels dirty devkit changes and permits execution, authoritative
+  mode rejects them.
+- **Full-graph validation** — resolver preflight validates every
+  locked declaration and every graph edge, including context/docs/math.
+- **Configure admission** — native configure requires a validated
+  resolution adapter and matching provider revisions.
+- **TCA closure selection** — TCA consumes context's locked identity
+  and stamps WorkspaceGeneration as provenance, not as content input.
+
+The lock does not enforce the invoking repository's own checkout
+state: the node-vs-checkout comparison for the invoking repo is a
+known blind spot — the activation-surface carrier is the closing
+surface. (Publication-side residuals — freshness bounded by the last
+fetch, unverified tracking-ref pedigree, `--no-verify` bypass — are
+stated in the hooks section below.)
 
 ## First-class consumer (owner direction 2026-09-30, C-059)
 
