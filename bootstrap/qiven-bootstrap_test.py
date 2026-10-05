@@ -166,11 +166,12 @@ class RecoveryEnvelopeTests(unittest.TestCase):
         hitting the default path), a construction failure still leaves
         rule_id + next_action on the envelope."""
         gate_kinds = set(BOOTSTRAP._CR_GATE_RULE_PATH)
+        unmapped_gate = "UnmappedGateKind"
         kinds = sorted(set(BOOTSTRAP._CR_RULE_PATH) | gate_kinds
-                       | {"UnmappedKind"})
+                       | {"UnmappedKind", unmapped_gate})
         self.assertGreater(len(kinds), 10)
         for kind in kinds:
-            if kind in gate_kinds:
+            if kind in gate_kinds or kind == unmapped_gate:
                 error = BOOTSTRAP._gate_typed(kind, f"fixture {kind}")
             else:
                 error = BOOTSTRAP.Typed(kind, f"fixture {kind}")
@@ -183,7 +184,16 @@ class RecoveryEnvelopeTests(unittest.TestCase):
                 for section in self.REQUIRED_SECTIONS:
                     self.assertIn(section, record)
                 self.assertEqual(record["schema_version"], 1)
-                self.assertTrue(record["findings"][0]["rule_id"])
+                rule_id = record["findings"][0]["rule_id"]
+                self.assertTrue(rule_id)
+                # F1 pin: the default rule-path prefix follows the routing
+                # (a gate-routed unmapped kind defaults to gate-configure/,
+                # mirroring _gate_typed's own default), never a bootstrap/
+                # rule id under a gate producer identity.
+                routing = getattr(error, "record_routing", None)
+                expected_prefix = ("gate-configure/" if routing is not None
+                                   else "bootstrap/")
+                self.assertTrue(rule_id.startswith(expected_prefix), rule_id)
                 self.assertIn("action", record["next_action"])
                 self.assertEqual(record["next_action"]["action"], "DIAGNOSE")
 

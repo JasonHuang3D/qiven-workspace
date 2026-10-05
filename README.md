@@ -94,7 +94,8 @@ pre-publication receipt contract is
 `qiven-context schema/pre-publication-receipt.schema.json`, owned by
 the qiven-context repository.
 Residuals — `--no-verify` bypasses hooks; freshness is bounded by the
-last fetch — are stated in `tools/hooks/README.md`, along with the
+last fetch; tracking-ref pedigree is unverified — are stated in
+`tools/hooks/README.md`, along with the
 sandbox test (`tools/hooks/lock_hooks_test.py`) that proves the
 blocking matrix end to end.
 

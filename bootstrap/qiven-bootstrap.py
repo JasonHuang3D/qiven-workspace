@@ -550,8 +550,10 @@ def _recovery_record(kind: object, routing: dict | None) -> dict:
     a next_action. Sources only static data on a path that cannot fail
     the way full record construction can: rule paths come from the
     frozen static tables keyed by the typed kind (dict .get, never
-    indexing), producer/record-kind/invocation discriminate on the
-    routing's PRESENCE (its contents may be exactly what failed), and
+    indexing), producer/record-kind/invocation - and the unmapped-kind
+    default prefix (gate-configure vs bootstrap, mirroring _gate_typed's
+    own default) - discriminate on the routing's PRESENCE (its contents
+    may be exactly what failed), and
     the next action is the single recovery channel DIAGNOSE - full
     construction failed, so the operator classifies from the relayed
     envelope; no correction is mechanically known here and none is
@@ -560,16 +562,19 @@ def _recovery_record(kind: object, routing: dict | None) -> dict:
     non-collision-resistant operation id this trade-off implies)."""
     if not isinstance(kind, str) or not kind:
         kind = "TypedFailure"
-    rule_path = (_CR_RULE_PATH.get(kind) or _CR_GATE_RULE_PATH.get(kind)
-                 or (f"bootstrap/{kind.lower()}", "bootstrap"))
     if routing is not None:
         producer_id = "workspace-bootstrap-gate-configure"
         record_kind = "bootstrap-gate-configure"
         invocation = "python bootstrap/qiven-bootstrap.py gate-configure"
+        # unmapped-kind default mirrors _gate_typed's own default prefix
+        default_rule_path = (f"gate-configure/{kind.lower()}", "gate-configure")
     else:
         producer_id = "workspace-bootstrap-preflight"
         record_kind = "bootstrap-preflight"
         invocation = "python bootstrap/qiven-bootstrap.py"
+        default_rule_path = (f"bootstrap/{kind.lower()}", "bootstrap")
+    rule_path = (_CR_RULE_PATH.get(kind) or _CR_GATE_RULE_PATH.get(kind)
+                 or default_rule_path)
     return {
         "schema_version": _CR_VERSION,
         "record_kind": record_kind,
