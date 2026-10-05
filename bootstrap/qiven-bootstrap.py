@@ -263,7 +263,7 @@ _CR_FIX_TABLE: dict[str, tuple[str, str]] = {
     "BootstrapDevkitMismatch": (
         "policy-rejected",
         "update the Devkit checkout to the locked commit, or advance the workspace "
-        "lock deliberately through the WR-8 trust-policy admission step (the "
+        "lock deliberately through the routine-advance trust-policy admission step (the "
         "identity check fails before any Devkit import)",
     ),
     "PreflightGenerationMismatch": (
@@ -677,7 +677,7 @@ def main(argv: list[str] | None = None) -> int:
                    help="identity-check + locked resolver preflight (default)")
 
     gate_cmd = sub.add_parser("gate-configure", parents=[common],
-                              help="WR-3: adapter + cmake --preset")
+                              help="gate-configure: adapter + cmake --preset")
     gate_cmd.add_argument("--repo", required=True, help="target repository id")
     gate_cmd.add_argument("--repo-root", required=True, help="target repository checkout")
     gate_cmd.add_argument("--preset", required=True, help="approved configure preset name")
