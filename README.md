@@ -86,8 +86,16 @@ sibling directory; there is no ambiguity to detect).
 Activation is machine-local: `git config core.hooksPath tools/hooks`.
 Verification uses remote-tracking refs (the last fetch, never the
 network): fetch in each node checkout before lock movement.
+The published state these hooks verify against is established upstream
+by the qiven-context c4 publication chain (branch -> clean-context
+review at committed head -> exact-head gate -> pre-publication receipt
+-> merge/push, enforced by tracked hooks in qiven-context); the
+pre-publication receipt contract is
+`qiven-context schema/pre-publication-receipt.schema.json`, owned by
+the qiven-context repository.
 Residuals — `--no-verify` bypasses hooks; freshness is bounded by the
-last fetch — are stated in `tools/hooks/README.md`, along with the
+last fetch; tracking-ref pedigree is unverified — are stated in
+`tools/hooks/README.md`, along with the
 sandbox test (`tools/hooks/lock_hooks_test.py`) that proves the
 blocking matrix end to end.
 
